@@ -1,4 +1,3 @@
-import { Separator } from "@/components/ui/separator"
 
 const AuthLayout = ({children}: {children: React.ReactNode}) => {
   return (
