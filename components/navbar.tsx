@@ -23,7 +23,7 @@ interface NavbarProps {
 
 const NavBar = async ({storeId}: NavbarProps) => {
   return (
-    <div className="flex items-center p-3 border-b z-50 fixed w-full from-purple-50 to-white shadow-md bg-slate-50 ">
+    <div className="flex items-center p-3 border-b z-50 fixed w-full from-purple-50 to-white shadow-md bg-slate-50">
       <MobileSidebar />
       <div className="w-full pl-5">
         <StoreName storeId={storeId}/>

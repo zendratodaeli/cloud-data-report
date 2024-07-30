@@ -32,10 +32,9 @@ const StoreName = ({ storeId }: StoreNameProps) => {
   }, [storeId]);
 
   if (!store) {
-    return <p className='text-xl font-bold text-black dark:text-white cursor-pointer'>No store found for this user.</p>;
+    return null
   }
 
-  console.log(store)
   return (
     <div>
       <h1 className='text-xl font-bold text-black dark:text-white cursor-pointer'>

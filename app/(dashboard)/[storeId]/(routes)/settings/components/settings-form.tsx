@@ -6,7 +6,7 @@ import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { Store } from "@prisma/client"
 import { Trash } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -16,6 +16,10 @@ import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { UseOrigin } from "@/hooks/use-origin";
+
+interface StoreProps {
+  id: string;
+}
 
 interface SettingsFormProps {
   initialData: Store;
@@ -41,6 +45,23 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: initialData,
   });
+
+  const [store, setStore] = useState<StoreProps | null>(null);
+
+  useEffect(() => {
+    const fetchStore = async () => {
+      try {
+        const response = await axios.get(`/api/stores/${params.storeId}`);
+        setStore(response.data);
+      } catch (error) {
+        console.error('Error fetching store:', error);
+        toast.error("Error fetching store's name")
+      }
+    };
+
+    fetchStore();
+  }, [params.storeId]);
+
 
   const onSubmit = async (data: SettingsFormValues) => {
     try {
@@ -93,6 +114,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
         </Button>
       </div>
       <Separator/>
+        <p className="text-muted-foreground text-sm font-bold py-[10px]">Store Id: {store?.id}</p>
       <Form {...form}>
         <form 
           onSubmit={form.handleSubmit(onSubmit)}

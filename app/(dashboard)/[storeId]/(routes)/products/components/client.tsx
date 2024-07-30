@@ -32,7 +32,7 @@ const ProductClient: React.FC<ProductClientProps> = ({ data }) => {
         </Button>
       </div> 
       <Separator/>
-      <DataTable searchKey="name" columns={columns} data={data} />
+      <DataTable searchKey="name" dateKey="createdAt" columns={columns} data={data} />
     </>
   )
 }
