@@ -55,11 +55,11 @@ const SideBar = () => {
   return (
     <div className="space-y-4 py-4 flex flex-col h-full from-purple-50 to-white bg-slate-50 border shadow-lg text-black overflow-y-auto">
       <div className=" py-2 flex-1">
-        <div className="pl-3 mb-5">
+        <div className="pl-3 mb-4">
           <StoreName storeId={`${params.storeId}`} />
         </div>
         <Separator />
-        <div className="space-y-1 pt-5 ">
+        <div className="space-y-1 p-5">
           {routes.map((route) => (
             <Link
               href={route.href}

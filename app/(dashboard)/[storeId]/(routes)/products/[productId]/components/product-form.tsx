@@ -23,7 +23,8 @@ const formSchema = z.object({
   price: z.coerce.number().min(1),
   categoryId: z.string().min(1),
   isSold: z.boolean().default(false).optional(),
-})
+  createdAt: z.string().optional(),
+});
 
 type ProductFormValues = z.infer<typeof formSchema>;
 
@@ -31,8 +32,6 @@ interface ProductFormProps {
   initialData: Product | null;
   categories: Category[];
 }
-
-
 
 const ProductForm: React.FC<ProductFormProps> = ({
   initialData, categories
@@ -44,21 +43,22 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const router = useRouter();
 
   const title = initialData ? "Edit a Product" : "Create a Product"
-  const desription = initialData ? "Edit a Product" : "Add a new Product"
+  const description = initialData ? "Edit a Product" : "Add a new Product"
   const toastMessage = initialData ? "Product Updated" : "Product created."
   const action = initialData ? "Save changes" : "Create"
-
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? { 
       ...initialData,
-      price: parseFloat(String(initialData?.price)) 
+      price: parseFloat(String(initialData?.price)),
+      createdAt: new Date(initialData.createdAt).toISOString().split('T')[0],
     } : {
       name: '',
       price: 0,
       categoryId: '',
-      isSold: false
+      isSold: false,
+      createdAt: new Date().toISOString().split('T')[0],
     },
   });
 
@@ -71,8 +71,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
       } else {
         await axios.post(`/api/${params.storeId}/products`, data);
       }
-
-      console.log(params.storeId)
 
       router.refresh();
       router.push(`/${params.storeId}/products`)
@@ -100,6 +98,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       setOpen(false)
     }
   }
+
   return (
     <>
       <AlertModal
@@ -111,7 +110,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       <div className="flex items-center justify-between pt-16">
         <Heading 
           title={title}
-          description={desription}
+          description={description}
         />
         {initialData && (
           <Button
@@ -130,7 +129,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-8 w-full"
         >
-          
           <div className="grid grid-cols-3 gap-8">
             <FormField
               control={form.control}
@@ -224,14 +222,31 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="createdAt"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Created At</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="date"
+                      disabled={loading}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage/>
+                </FormItem>
+              )}
+            />
           </div>
           <Button disabled={loading} className="ml-auto" type="submit">
             {action}
           </Button>
         </form>
       </Form>
-    </> 
-  )
+    </>
+  );
 }
 
-export default ProductForm
+export default ProductForm;

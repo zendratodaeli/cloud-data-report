@@ -35,7 +35,6 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Heading } from "./heading";
 import { useUser } from "@clerk/nextjs";
 
 interface DataItem {
@@ -62,8 +61,6 @@ export function DataTable<TData extends DataItem, TValue>({
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [filteredData, setFilteredData] = useState<TData[]>(data);
-  const [selectedPort, setSelectedPort] = useState<string | null>(null);
-  const [availablePorts, setAvailablePorts] = useState<string[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const router = useRouter();
@@ -97,7 +94,6 @@ export function DataTable<TData extends DataItem, TValue>({
   useEffect(() => {
     setIsMounted(true);
     setDateFilter(format(new Date(), "yyyy-MM-dd"));
-
   }, [data]);
 
   useEffect(() => {
@@ -145,7 +141,7 @@ export function DataTable<TData extends DataItem, TValue>({
             raw: false,
             dateNF: "yyyy-mm-dd",
           });
-  
+
           // Validate and ensure categoryId is present, and convert isSold to boolean
           const parsedJson = json.map((item: any) => {
             if (!item.categoryId) {
@@ -156,14 +152,14 @@ export function DataTable<TData extends DataItem, TValue>({
               name: item.name,
               price: item.price,
               categoryId: item.categoryId,
-              isSold: item.isSold.toLowerCase() === 'true', // Convert to boolean
+              isSold: item.isSold.toLowerCase() === "true", // Convert to boolean
             };
           });
-  
+
           try {
             await axios.post(`/api/${params.storeId}/data-upload`, parsedJson);
             toast.success("Product has been uploaded successfully");
-  
+
             router.push(`/${params.storeId}/products`);
             router.refresh();
           } catch (error) {
@@ -177,7 +173,6 @@ export function DataTable<TData extends DataItem, TValue>({
       reader.readAsBinaryString(uploadedFile);
     }
   };
-  
 
   const parseExcelDate = (excelDate: string | number) => {
     if (typeof excelDate === "number" && !isNaN(excelDate)) {
@@ -193,9 +188,7 @@ export function DataTable<TData extends DataItem, TValue>({
     return excelDate;
   };
 
-  const listAdminId = [
-    "user_2jycpXmZTQ0FxmZiV0uFBjzXRFn",
-  ];
+  const listAdminId = ["user_2jycpXmZTQ0FxmZiV0uFBjzXRFn"];
 
   if (!userId) {
     return null;
@@ -206,7 +199,6 @@ export function DataTable<TData extends DataItem, TValue>({
   if (!isMounted) {
     return null;
   }
-
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -229,11 +221,14 @@ export function DataTable<TData extends DataItem, TValue>({
     setFile(selectedFile);
   };
 
+  const currentPath = window.location.pathname;
+  const productsPath = `/${params.storeId}/products`;
+
   return (
     <div>
       <div className="grid grid-cols-1 w-full md:grid-cols-2 py-4 gap-2">
         <Input
-          placeholder="Search product's name"
+          placeholder="Search by name"
           value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn(searchKey)?.setFilterValue(event.target.value)
@@ -247,9 +242,13 @@ export function DataTable<TData extends DataItem, TValue>({
             onChange={handleDateChange}
             className="w-[144px]"
           />
+          {currentPath === productsPath ? (
             <Dialog>
               <DialogTrigger>
-                <Button className="w-[115.84px] md:w-[150px]" variant={"outline"}>
+                <Button
+                  className="w-[115.84px] md:w-[150px]"
+                  variant={"outline"}
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   Import
                 </Button>
@@ -320,9 +319,12 @@ export function DataTable<TData extends DataItem, TValue>({
                 </DialogHeader>
               </DialogContent>
             </Dialog>
+          ) : (
+            <></>
+          )}
         </div>
         <Input
-          placeholder="Search by product"
+          placeholder="Search by name"
           value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn(searchKey)?.setFilterValue(event.target.value)

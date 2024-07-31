@@ -11,7 +11,8 @@ export async function POST(req: Request, { params }: { params: {storeId: string}
       name, 
       price, 
       categoryId,
-      isSold
+      isSold,
+      createdAt
     } = body;
 
     if(!userId) {
@@ -30,7 +31,7 @@ export async function POST(req: Request, { params }: { params: {storeId: string}
       return new NextResponse("Category Id is required", {status: 400})
     };
 
-    if(!isSold) {
+    if(isSold === undefined) {
       return new NextResponse("Is Sold is required", {status: 400})
     };
 
@@ -56,6 +57,7 @@ export async function POST(req: Request, { params }: { params: {storeId: string}
         price, 
         categoryId, 
         isSold,
+        createdAt: createdAt ? new Date(createdAt) : new Date(),
         storeId: params.storeId,
     }
     });
