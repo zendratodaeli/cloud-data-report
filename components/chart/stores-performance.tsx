@@ -26,7 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useUser } from "@clerk/nextjs";
 
 // Define the Product type
 interface Product {
@@ -54,8 +53,15 @@ interface Product {
   };
 }
 
-interface SalesProductProps {
+interface Store {
+  id: string;
+  name: string;
+  userId: string;
+}
+
+interface StoresPerformanceProps {
   products: Product[];
+  stores: Store[];
 }
 
 // Formatter for currency
@@ -71,20 +77,23 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
+const StoresPerformance: React.FC<StoresPerformanceProps> = ({ products, stores }) => {
   const [timeRange, setTimeRange] = React.useState("7d");
   const [selectedProduct, setSelectedProduct] = React.useState<string>("all");
-  const { user } = useUser();
-  const userId = user?.id;
-
+  const [selectedStore, setSelectedStore] = React.useState<string>("all");
   // Filter products where isSold is true
   const soldProducts = products.filter((product) => product.isSold);
 
-  // Filter products based on the selected product
+  // Filter products based on the selected product and store
   const filteredProducts =
     selectedProduct === "all"
       ? soldProducts
       : soldProducts.filter((product) => product.name === selectedProduct);
+
+  const storeFilteredProducts =
+    selectedStore === "all"
+      ? filteredProducts
+      : filteredProducts.filter((product) => product.storeId === selectedStore);
 
   const now = new Date();
   let pastDate: Date;
@@ -99,9 +108,9 @@ const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
     pastDate = subMonths(now, 12); // Last 1 year
   } else if (timeRange === "all") {
     pastDate = new Date(
-      filteredProducts.reduce(
+      storeFilteredProducts.reduce(
         (min, p) => (new Date(p.createdAt) < new Date(min) ? p.createdAt : min),
-        filteredProducts[0].createdAt
+        storeFilteredProducts[0].createdAt
       )
     );
     pastDate.setHours(0, 0, 0, 0); // Set to start of the day
@@ -169,7 +178,7 @@ const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
     return filledData;
   };
 
-  const chartData = aggregateData(filteredProducts, timeRange);
+  const chartData = aggregateData(storeFilteredProducts, timeRange);
 
   // Ensure current date is included in the chartData
   const today = format(now, 'yyyy-MM-dd');
@@ -209,6 +218,11 @@ const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
     (sum, product) => sum + product.price,
     0
   );
+
+  // Filter products for product selection dropdown based on selected store
+  const availableProducts = selectedStore === "all"
+    ? soldProducts
+    : soldProducts.filter((product) => product.storeId === selectedStore);
 
   return (
     <div>
@@ -256,6 +270,36 @@ const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
             </div>
             <div>
               <Select
+                value={selectedStore}
+                onValueChange={(value) => {
+                  setSelectedStore(value);
+                  setSelectedProduct("all"); // Reset product selection when store changes
+                }}
+              >
+                <SelectTrigger
+                  className="w-[160px] rounded-lg sm:ml-auto"
+                  aria-label="Select a store"
+                >
+                  <SelectValue placeholder="Select store" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="all" className="rounded-lg">
+                    All Stores
+                  </SelectItem>
+                  {stores.map((store) => (
+                    <SelectItem
+                      key={store.id}
+                      value={store.id}
+                      className="rounded-lg"
+                    >
+                      {store.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Select
                 value={selectedProduct}
                 onValueChange={setSelectedProduct}
               >
@@ -269,13 +313,10 @@ const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
                   <SelectItem value="all" className="rounded-lg">
                     All Products
                   </SelectItem>
-                  {Array.from(
-                    new Set(
-                      soldProducts
-                        .filter((product) => product.store.userId === userId) // Filter by current user
-                        .map((product) => product.name)
-                    )
-                  ).map((productName) => (
+                  {Array.from(new Set(
+                    availableProducts
+                      .map((product) => product.name)
+                  )).map((productName) => (
                     <SelectItem
                       key={productName}
                       value={productName}
@@ -362,4 +403,4 @@ const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
   );
 };
 
-export default SalesProduct;
+export default StoresPerformance;

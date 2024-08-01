@@ -2,14 +2,22 @@ import prismadb from '@/lib/prismadb'
 import { CategoryColumn } from './components/columns'
 import { format } from 'date-fns'
 import CategoryClient from './components/client'
+import { auth } from '@clerk/nextjs/server'
 
 const CategoriesPage = async ({
   params
 }: { params: {storeId : string}}) => {
 
+  const {userId } = auth();
+
+  if(!userId) {
+    return null;
+  }
+
   const categories = await prismadb.category.findMany({
     where: {
-      storeId: params.storeId
+      storeId: params.storeId,
+      id: userId
     },
     include: {
       store: true

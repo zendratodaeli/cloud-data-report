@@ -1,12 +1,19 @@
 import prismadb from '@/lib/prismadb'
 import React from 'react'
 import ProductForm from './components/product-form'
+import { auth } from '@clerk/nextjs/server'
 
 const ProductPage = async ({
   params
 }: {
-  params: {productId : string, storedId: string}
+  params: {productId : string, storeId: string}
 }) => {
+
+  const { userId } = auth();
+
+  if(!userId) {
+    return null;
+  }
 
   const product = await prismadb.product.findUnique({
     where: {
@@ -16,7 +23,10 @@ const ProductPage = async ({
 
   const categories = await prismadb.category.findMany({
     where: {
-      storeId: params.storedId
+      storeId: params.storeId,
+      store: {
+        userId: userId
+      }
     }
   })
 

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { format, subDays, subMonths, startOfWeek, startOfMonth, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval } from 'date-fns';
+import { format, subDays, subMonths, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfWeek, startOfMonth } from 'date-fns';
 
 import {
   Card,
@@ -26,9 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useUser } from "@clerk/nextjs";
 
-// Define the Product type
+// Define the Product and Store types
 interface Product {
   id: string;
   storeId: string;
@@ -54,8 +53,15 @@ interface Product {
   };
 }
 
-interface SalesProductProps {
+interface Store {
+  id: string;
+  name: string;
+  userId: string;
+}
+
+interface UnrealizedStoresPerformanceProps {
   products: Product[];
+  stores: Store[];
 }
 
 // Formatter for currency
@@ -66,25 +72,29 @@ export const formatter = new Intl.NumberFormat("id-ID", {
 
 const chartConfig = {
   price: {
-    label: "Revenue",
-    color: "#00B5AD",
+    label: "Unrealized Revenue",
+    color: "#FF0000", // Red color for the legend
   },
 } satisfies ChartConfig;
 
-const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
+const UnrealizedStoresPerformance: React.FC<UnrealizedStoresPerformanceProps> = ({ products, stores }) => {
   const [timeRange, setTimeRange] = React.useState("7d");
   const [selectedProduct, setSelectedProduct] = React.useState<string>("all");
-  const { user } = useUser();
-  const userId = user?.id;
+  const [selectedStore, setSelectedStore] = React.useState<string>("all");
 
-  // Filter products where isSold is true
-  const soldProducts = products.filter((product) => product.isSold);
+  // Filter products where isSold is false
+  const unsoldProducts = products.filter((product) => !product.isSold);
 
-  // Filter products based on the selected product
+  // Filter products based on the selected product and store
   const filteredProducts =
     selectedProduct === "all"
-      ? soldProducts
-      : soldProducts.filter((product) => product.name === selectedProduct);
+      ? unsoldProducts
+      : unsoldProducts.filter((product) => product.name === selectedProduct);
+
+  const storeFilteredProducts =
+    selectedStore === "all"
+      ? filteredProducts
+      : filteredProducts.filter((product) => product.storeId === selectedStore);
 
   const now = new Date();
   let pastDate: Date;
@@ -99,9 +109,9 @@ const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
     pastDate = subMonths(now, 12); // Last 1 year
   } else if (timeRange === "all") {
     pastDate = new Date(
-      filteredProducts.reduce(
+      storeFilteredProducts.reduce(
         (min, p) => (new Date(p.createdAt) < new Date(min) ? p.createdAt : min),
-        filteredProducts[0].createdAt
+        storeFilteredProducts[0].createdAt
       )
     );
     pastDate.setHours(0, 0, 0, 0); // Set to start of the day
@@ -169,7 +179,7 @@ const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
     return filledData;
   };
 
-  const chartData = aggregateData(filteredProducts, timeRange);
+  const chartData = aggregateData(storeFilteredProducts, timeRange);
 
   // Ensure current date is included in the chartData
   const today = format(now, 'yyyy-MM-dd');
@@ -182,21 +192,14 @@ const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
 
   // Debugging statement to check todayData
   console.log(`Today's data: ${JSON.stringify(todayData)}`);
-  console.log(
-    `Chart Data before fillMissingDates: ${JSON.stringify(chartData)}`
-  );
+  console.log(`Chart Data before fillMissingDates: ${JSON.stringify(chartData)}`);
 
   // Sort chartData before filling missing dates
   const sortedChartData = chartData.sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
-  const filledData = fillMissingDates(
-    sortedChartData,
-    pastDate,
-    now,
-    timeRange
-  );
+  const filledData = fillMissingDates(sortedChartData, pastDate, now, timeRange);
 
   const sortedData = filledData.sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
@@ -205,89 +208,110 @@ const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
   console.log(`Sorted Data: ${JSON.stringify(sortedData)}`);
 
   const totalPrice = sortedData.reduce((sum, item) => sum + item.price, 0);
-  const allTimeTotalPrice = soldProducts.reduce(
-    (sum, product) => sum + product.price,
-    0
-  );
+  const allTimeTotalPrice = unsoldProducts.reduce((sum, product) => sum + product.price, 0);
+
+  // Filter products for product selection dropdown based on selected store
+  const availableProducts = selectedStore === "all"
+    ? unsoldProducts
+    : unsoldProducts.filter((product) => product.storeId === selectedStore);
 
   return (
     <div>
       <Card>
         <CardHeader className="flex items-center sm:items-start gap-2 space-y-0 border-b py-5 sm:flex-row">
           <div className="grid flex-1 gap-1 text-center sm:text-left">
-            <CardTitle>Daily Sales Analytics</CardTitle>
+            <CardTitle>Daily Unrealized Sales Analytics</CardTitle>
             <CardDescription>
-              Showing total sales for the selected time range
+              Showing total unrealized sales for the selected time range
             </CardDescription>
             <div className="text-large font-bold">
-              Total Revenue: (+) {formatter.format(allTimeTotalPrice)}
+              Total Unrealized: (-) {formatter.format(allTimeTotalPrice)}
             </div>
             <div className="text-large font-bold">
-              Selected Revenue: (+) {formatter.format(totalPrice)}
+              Selected Unrealized: (-) {formatter.format(totalPrice)}
             </div>
           </div>
-          <div className="flex space-x-2">
-            <div>
-              <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger
-                  className="w-[160px] rounded-lg sm:ml-auto"
-                  aria-label="Select a value"
+
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger
+              className="w-[160px] rounded-lg sm:ml-auto"
+              aria-label="Select a value"
+            >
+              <SelectValue placeholder="Select time range" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="7d" className="rounded-lg">
+                Last 7 days
+              </SelectItem>
+              <SelectItem value="30d" className="rounded-lg">
+                Last 30 days
+              </SelectItem>
+              <SelectItem value="6m" className="rounded-lg">
+                Last 6 months
+              </SelectItem>
+              <SelectItem value="1y" className="rounded-lg">
+                Last 1 year
+              </SelectItem>
+              <SelectItem value="all" className="rounded-lg">
+                All time
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={selectedStore}
+            onValueChange={(value) => {
+              setSelectedStore(value);
+              setSelectedProduct("all"); // Reset product selection when store changes
+            }}
+          >
+            <SelectTrigger
+              className="w-[160px] rounded-lg sm:ml-auto"
+              aria-label="Select a store"
+            >
+              <SelectValue placeholder="Select store" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="all" className="rounded-lg">
+                All Stores
+              </SelectItem>
+              {stores.map((store) => (
+                <SelectItem
+                  key={store.id}
+                  value={store.id}
+                  className="rounded-lg"
                 >
-                  <SelectValue placeholder="Select time range" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="7d" className="rounded-lg">
-                    Last 7 days
-                  </SelectItem>
-                  <SelectItem value="30d" className="rounded-lg">
-                    Last 30 days
-                  </SelectItem>
-                  <SelectItem value="6m" className="rounded-lg">
-                    Last 6 months
-                  </SelectItem>
-                  <SelectItem value="1y" className="rounded-lg">
-                    Last 1 year
-                  </SelectItem>
-                  <SelectItem value="all" className="rounded-lg">
-                    All time
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Select
-                value={selectedProduct}
-                onValueChange={setSelectedProduct}
-              >
-                <SelectTrigger
-                  className="w-[160px] rounded-lg sm:ml-auto"
-                  aria-label="Select a product"
+                  {store.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+            <SelectTrigger
+              className="w-[160px] rounded-lg sm:ml-auto"
+              aria-label="Select a product"
+            >
+              <SelectValue placeholder="Select product" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="all" className="rounded-lg">
+                All Products
+              </SelectItem>
+              {Array.from(new Set(
+                availableProducts
+                  .map((product) => product.name)
+              )).map((productName) => (
+                <SelectItem
+                  key={productName}
+                  value={productName}
+                  className="rounded-lg"
                 >
-                  <SelectValue placeholder="Select product" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="all" className="rounded-lg">
-                    All Products
-                  </SelectItem>
-                  {Array.from(
-                    new Set(
-                      soldProducts
-                        .filter((product) => product.store.userId === userId) // Filter by current user
-                        .map((product) => product.name)
-                    )
-                  ).map((productName) => (
-                    <SelectItem
-                      key={productName}
-                      value={productName}
-                      className="rounded-lg"
-                    >
-                      {productName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+                  {productName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
           <ChartContainer
@@ -297,8 +321,16 @@ const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
             <AreaChart data={sortedData}>
               <defs>
                 <linearGradient id="fillPrice" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00B5AD" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#00B5AD" stopOpacity={0.1} />
+                  <stop
+                    offset="0%"
+                    stopColor="#FF0000"
+                    stopOpacity={0.7}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="#FF0000"
+                    stopOpacity={0.1}
+                  />
                 </linearGradient>
               </defs>
               <CartesianGrid vertical={false} />
@@ -315,15 +347,11 @@ const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
                       month: "short",
                       day: "numeric",
                     });
-                  } else if (timeRange === "6m") {
-                    return date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    });
-                  } else if (timeRange === "1y" || timeRange === "all") {
+                  } else if (timeRange === "6m" || timeRange === "1y" || timeRange === "all") {
                     return date.toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "short",
+                      day: "numeric"
                     });
                   }
                   return ""; // Default return value
@@ -349,8 +377,8 @@ const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
               <Area
                 dataKey="price"
                 type="natural"
-                fill="url(#fillPrice)"
-                stroke="#00B5AD"
+                fill="#E06666"
+                stroke="#FF0000" // Change the stroke color to red
                 stackId="a"
               />
               <ChartLegend content={<ChartLegendContent />} />
@@ -362,4 +390,4 @@ const SalesProduct: React.FC<SalesProductProps> = ({ products }) => {
   );
 };
 
-export default SalesProduct;
+export default UnrealizedStoresPerformance;

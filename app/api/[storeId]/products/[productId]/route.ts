@@ -37,7 +37,7 @@ export async function PATCH(req: Request, { params }: {params: {storeId: string,
       name, 
       price, 
       categoryId,
-      isSold,
+      isSold = false,
       createdAt
     } = body;
 
@@ -57,9 +57,6 @@ export async function PATCH(req: Request, { params }: {params: {storeId: string,
       return new NextResponse("Category Id is required", {status: 400})
     };
 
-    if(!isSold) {
-      return new NextResponse("Color Id is required", {status: 400})
-    };
 
     if(!createdAt) {
       return new NextResponse("Created at is required", {status: 400})

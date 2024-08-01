@@ -1,6 +1,7 @@
 "use client"
 
 import * as z from "zod";
+import { format } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
@@ -22,7 +23,7 @@ const formSchema = z.object({
   name: z.string().min(1),
   price: z.coerce.number().min(1),
   categoryId: z.string().min(1),
-  isSold: z.boolean().default(false).optional(),
+  isSold: z.boolean().optional(),
   createdAt: z.string().optional(),
 });
 
@@ -47,18 +48,20 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const toastMessage = initialData ? "Product Updated" : "Product created."
   const action = initialData ? "Save changes" : "Create"
 
+  const todayDate = format(new Date(), 'yyyy-MM-dd'); // Ensure today's date is correctly formatted
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? { 
       ...initialData,
       price: parseFloat(String(initialData?.price)),
-      createdAt: new Date(initialData.createdAt).toISOString().split('T')[0],
+      createdAt: format(new Date(initialData.createdAt), 'yyyy-MM-dd'), // Ensure the date is correctly formatted
     } : {
       name: '',
       price: 0,
       categoryId: '',
       isSold: false,
-      createdAt: new Date().toISOString().split('T')[0],
+      createdAt: todayDate, // Use today's date as the default value
     },
   });
 
@@ -129,7 +132,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-8 w-full"
         >
-          <div className="grid grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FormField
               control={form.control}
               name="name"

@@ -11,7 +11,7 @@ export async function POST(req: Request, { params }: { params: {storeId: string}
       name, 
       price, 
       categoryId,
-      isSold,
+      isSold = false,
       createdAt
     } = body;
 
@@ -29,10 +29,6 @@ export async function POST(req: Request, { params }: { params: {storeId: string}
 
     if(!categoryId) {
       return new NextResponse("Category Id is required", {status: 400})
-    };
-
-    if(isSold === undefined) {
-      return new NextResponse("Is Sold is required", {status: 400})
     };
 
     if(!params.storeId) {

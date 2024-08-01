@@ -32,6 +32,7 @@
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
     "dompurify": "^3.1.6",
+    "framer-motion": "^11.3.19",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
     "lucide-react": "^0.417.0",
