@@ -10,18 +10,6 @@ const Dashboard = async ({ params }: { params: { storeId: string } }) => {
     return null;
   }
 
-  const store = await prismadb.store.findMany({
-    
-    include: {
-      products: true
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  })
-
-  console.log(store.map(p => p.products), "store")
-
   const products = await prismadb.product.findMany({
     where: {
       storeId: params.storeId,

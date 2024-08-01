@@ -5,11 +5,12 @@ import { formatter } from "@/lib/utils";
 import ProductClient from "./components/client";
 import DownloadButton from "@/components/download-button";
 import { auth } from "@clerk/nextjs/server";
+import SalesProduct from "@/components/chart/sales-product";
 
 const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
-  const {userId } = auth();
+  const { userId } = auth();
 
-  if(!userId) {
+  if (!userId) {
     return null;
   }
 
@@ -17,26 +18,18 @@ const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
     where: {
       storeId: params.storeId,
       store: {
-        userId: userId
-      }
+        userId: userId,
+      },
     },
     include: {
       category: true,
-      store: true
+      store: true,
     },
     orderBy: {
       createdAt: "desc",
     },
   });
 
-  const categories = await prismadb.category.findMany({
-    where: {
-      storeId: params.storeId,
-      store: {
-        userId: userId
-      }
-    },
-  });
   const formattedProducts: ProductColumn[] = products.map((item) => ({
     id: item.id,
     name: item.name,
@@ -44,12 +37,30 @@ const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
     price: formatter.format(item.price.toNumber()),
     category: item.category.name,
     createdAt: format(item.createdAt, "MMMM do, yyyy"),
-    storeName: item.store.name
+    storeName: item.store.name,
+  }));
+
+  const transformedProducts = products.map((product) => ({
+    ...product,
+    price: Number(product.price),
+    createdAt: product.createdAt.toISOString(),
+    updatedAt: product.updatedAt.toISOString(),
+    category: {
+      ...product.category,
+      createdAt: product.category.createdAt.toISOString(),
+      updatedAt: product.category.updatedAt.toISOString(),
+    },
+    store: {
+      ...product.store,
+      createdAt: product.store.createdAt.toISOString(),
+      updatedAt: product.store.updatedAt.toISOString(),
+    },
   }));
 
   return (
     <div className="flex-col pt-16">
       <div className="flex-1 space-y-4 p-8 pt-6">
+        <SalesProduct products={transformedProducts} />
         <ProductClient data={formattedProducts} />
         <DownloadButton data={formattedProducts} />
       </div>

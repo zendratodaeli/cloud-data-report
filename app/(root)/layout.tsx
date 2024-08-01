@@ -20,8 +20,6 @@ const SetupLayout = async ({
     redirect("/admin");
   }
 
-  console.log(userId)
-
   const store = await prismadb.store.findFirst({
     where: {
       userId: userId
