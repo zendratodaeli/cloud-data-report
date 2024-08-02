@@ -39,6 +39,7 @@ const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
     quantity: item.quantity,
     remainQuantity: item.remainQuantity,
     soldOutQuantity: item.quantity - item.remainQuantity,
+    grossIncome: formatter.format(item.grossIncome), // Add gross income
     income: formatter.format(item.income),
     tax: `${item.tax}%`,
     profit: formatter.format(item.profit),

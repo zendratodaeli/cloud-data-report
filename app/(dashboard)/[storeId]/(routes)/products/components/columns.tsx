@@ -1,11 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
-import { format } from "date-fns";
-import prismadb from "@/lib/prismadb";
-import { formatter } from "@/lib/utils";
-import DownloadButton from "@/components/download-button";
-import { auth } from "@clerk/nextjs/server";
-import StorePerformance from "@/components/chart/store-performance";
 
 export type ProductColumn = {
   id: string;
@@ -15,12 +9,14 @@ export type ProductColumn = {
   quantity: number;
   remainQuantity: number;
   soldOutQuantity: number;
+  grossIncome: string;  // Add this field
   income: string;
   tax: string;
   profit: string;
   category: string;
   createdAt: string;
 };
+
 
 export const columns: ColumnDef<ProductColumn>[] = [
   {
@@ -50,6 +46,10 @@ export const columns: ColumnDef<ProductColumn>[] = [
   {
     accessorKey: "tax",
     header: "Tax",
+  },
+  {
+    accessorKey: "grossIncome",  // Add this column
+    header: "Gross Income (Before Tax)",
   },
   {
     accessorKey: "income",

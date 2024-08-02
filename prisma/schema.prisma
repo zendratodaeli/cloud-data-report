@@ -53,7 +53,7 @@ model Product {
   sold            Sold[]   @relation("ProductToSold")
   soldOutQuantity Int      @default(0)
   remainQuantity  Int
-  // grossIncome     Int      @default(0)
+  grossIncome     Int      @default(0)
   income          Int
   tax             Int
   profit          Int

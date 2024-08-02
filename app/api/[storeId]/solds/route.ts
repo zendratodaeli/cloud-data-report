@@ -45,13 +45,6 @@ export async function POST(req: Request, { params }: { params: { storeId: string
       return new NextResponse("Product not found", { status: 404 });
     }
 
-    const totalSold = product.sold.reduce((acc, sold) => acc + sold.totalSoldOut, 0);
-    const remainQuantity = product.quantity - totalSold;
-
-    if (totalSoldOut > remainQuantity) {
-      return new NextResponse(`Cannot sell more than ${remainQuantity} items`, { status: 400 });
-    }
-
     const newSoldRecord = await prismadb.sold.create({
       data: {
         productId,
@@ -61,16 +54,17 @@ export async function POST(req: Request, { params }: { params: { storeId: string
       },
     });
 
-    const updatedTotalSold = totalSold + totalSoldOut;
-    const updatedRemainQuantity = product.quantity - updatedTotalSold;
-    const grossIncome = updatedTotalSold * product.pricePerPiece;
+    const totalSold = product.sold.reduce((acc, sold) => acc + sold.totalSoldOut, 0) + totalSoldOut;
+    const remainQuantity = product.quantity - totalSold;
+    const grossIncome = totalSold * product.pricePerPiece;
     const netIncome = grossIncome - (grossIncome * (product.tax / 100)); // Calculate net income after tax
     const profit = netIncome - product.capital;
 
     await prismadb.product.update({
       where: { id: productId },
       data: {
-        remainQuantity: updatedRemainQuantity,
+        remainQuantity,
+        grossIncome, // Store gross income
         income: netIncome, // Store net income
         profit,
         // Do not update the tax here as it is static
@@ -84,6 +78,7 @@ export async function POST(req: Request, { params }: { params: { storeId: string
     return new NextResponse("Internal error", { status: 500 });
   }
 }
+
 
 export async function GET(req: Request, { params }: { params: { storeId: string } }) {
   try {

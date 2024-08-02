@@ -59,7 +59,7 @@ export async function POST(req: Request, { params }: { params: { storeId: string
     if (!storeByUserId) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
-
+    
     const product = await prismadb.product.create({
       data: {
         name,
@@ -68,6 +68,7 @@ export async function POST(req: Request, { params }: { params: { storeId: string
         quantity,
         remainQuantity: quantity,
         income: 0,
+        grossIncome: 0,
         tax: tax || 0,
         profit: 0,
         soldOutQuantity: 0,
