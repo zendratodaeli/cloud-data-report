@@ -84,25 +84,33 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
       return new NextResponse("Product not found", { status: 404 });
     }
 
+    const originalTotalSoldOut = soldRecord.totalSoldOut;
+    const newTotalSoldOut = totalSoldOut;
+    const quantityDifference = newTotalSoldOut - originalTotalSoldOut;
+
+    if (quantityDifference > product.remainQuantity) {
+      return new NextResponse(`Cannot sell more than ${product.remainQuantity} additional items`, { status: 400 });
+    }
+
     const updatedSoldRecord = await prismadb.sold.update({
       where: { id: params.soldId },
       data: {
-        totalSoldOut,
-        income: totalSoldOut * product.pricePerPiece,
+        totalSoldOut: newTotalSoldOut,
+        income: newTotalSoldOut * product.pricePerPiece,
         createdAt: createdAt ? new Date(createdAt) : new Date(),
       },
     });
 
-    const totalSold = product.sold.reduce((acc, sold) => acc + (sold.id === soldRecord.id ? totalSoldOut : sold.totalSoldOut), 0);
-    const remainQuantity = product.quantity - totalSold;
-    const grossIncome = totalSold * product.pricePerPiece;
+    const newTotalSold = product.sold.reduce((acc, sold) => acc + (sold.id === soldRecord.id ? newTotalSoldOut : sold.totalSoldOut), 0);
+    const newRemainQuantity = product.quantity - newTotalSold;
+    const grossIncome = newTotalSold * product.pricePerPiece;
     const netIncome = grossIncome - (grossIncome * (product.tax / 100)); // Calculate net income after tax
     const profit = netIncome - product.capital;
 
     await prismadb.product.update({
       where: { id: productId },
       data: {
-        remainQuantity,
+        remainQuantity: newRemainQuantity,
         income: netIncome, // Store net income
         profit,
         // Do not update the tax here as it is static
@@ -116,6 +124,8 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
     return new NextResponse("Internal error", { status: 500 });
   }
 }
+
+
 
 
 export async function DELETE(req: Request, { params }: { params: { storeId: string, soldId: string } }) {

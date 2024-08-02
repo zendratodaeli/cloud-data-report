@@ -69,8 +69,8 @@ const chartConfig = {
     label: "Quantity Sold",
     color: "#00B5AD",
   },
-  soldIncome: {
-    label: "Income",
+  netIncome: {
+    label: "Net Income",
     color: "#FF0000",
   },
 } satisfies ChartConfig;
@@ -121,7 +121,7 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({ products }) => {
   }
 
   const createDateMap = (products: Product[], interval: string) => {
-    const map = new Map<string, { quantity: number; income: number }>();
+    const map = new Map<string, { quantity: number; netIncome: number }>();
 
     products.forEach((product) => {
       product.sold.forEach((soldRecord) => {
@@ -139,12 +139,12 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({ products }) => {
         }
 
         if (!map.has(date)) {
-          map.set(date, { quantity: 0, income: 0 });
+          map.set(date, { quantity: 0, netIncome: 0 });
         }
         const existing = map.get(date)!;
         map.set(date, {
           quantity: existing.quantity + soldRecord.totalSoldOut,
-          income: existing.income + soldRecord.income,
+          netIncome: existing.netIncome + (soldRecord.income - (soldRecord.income * (product.tax / 100))), // Calculate net income after tax
         });
       });
     });
@@ -156,15 +156,13 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({ products }) => {
 
   const mergedData = dateRange.map((date) => {
     const formattedDate = timeRange === "1y" || timeRange === "all" ? format(date, 'yyyy-MM') : format(date, 'yyyy-MM-dd');
-    const data = dateMap.get(formattedDate) || { quantity: 0, income: 0 };
+    const data = dateMap.get(formattedDate) || { quantity: 0, netIncome: 0 };
     return {
       date: formattedDate,
       quantity: data.quantity,
-      income: data.income,
+      netIncome: data.netIncome,
     };
   });
-
-  const totalProfit = filteredProducts.reduce((total, product) => total + product.profit, 0);
 
   console.log('Merged Data:', mergedData); // Debugging line to check the merged data
 
@@ -173,18 +171,15 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({ products }) => {
       <Card>
         <CardHeader className="flex items-center sm:items-start gap-2 space-y-0 border-b py-5 sm:flex-row">
           <div className="grid flex-1 gap-1 text-center sm:text-left">
-            <CardTitle>Sales Analytics Products</CardTitle>
+            <CardTitle>Sales Analytics</CardTitle>
             <CardDescription>
               Showing total sales for the selected time range
             </CardDescription>
             <div className="text-large font-bold">
+              Total Net Income: {formatter.format(mergedData.reduce((acc, item) => acc + item.netIncome, 0))}
+            </div>
+            <div className="text-large font-bold">
               Total Quantity Sold: {mergedData.reduce((acc, item) => acc + item.quantity, 0)}
-            </div>
-            <div className="text-large font-bold">
-              Total Income: {formatter.format(mergedData.reduce((acc, item) => acc + item.income, 0))}
-            </div>
-            <div className="text-large font-bold">
-              Total Profit: {formatter.format(totalProfit)}
             </div>
           </div>
           <div className="flex space-x-2">
@@ -241,11 +236,10 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({ products }) => {
           </div>
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          
           <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
             <AreaChart data={mergedData}>
               <defs>
-                <linearGradient id="fillSoldIncome" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="fillSoldNetIncome" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#FF0000" stopOpacity={0.8} />
                   <stop offset="95%" stopColor="#FF0000" stopOpacity={0.1} />
                 </linearGradient>
@@ -285,7 +279,8 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({ products }) => {
                     return (
                       <div className="custom-tooltip">
                         <p className="label">{`${label}`}</p>
-                        <p className="intro">{`Income: ${formatter.format(payload[0]?.payload?.income || 0)}`}</p>
+                        <p className="intro">{`Quantity Sold: ${payload[0]?.payload?.quantity || 0}`}</p>
+                        <p className="intro">{`Net Income: ${formatter.format(payload[0]?.payload?.netIncome || 0)}`}</p>
                       </div>
                     );
                   }
@@ -293,13 +288,13 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({ products }) => {
                 }}
               />
               <Area
-                dataKey="income"
+                dataKey="netIncome"
                 type="monotone"
-                fill="url(#fillSoldIncome)"
+                fill="url(#fillSoldNetIncome)"
                 stroke="#FF0000"
-                name="Income"
+                name="Net Income"
               />
-              <Legend content={<CustomChartLegendContent label="Income" color="#FF0000" />} />
+              <Legend content={<CustomChartLegendContent label="Net Income" color="#FF0000" />} />
             </AreaChart>
           </ChartContainer>
           <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full mb-6">

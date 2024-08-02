@@ -48,12 +48,12 @@ export const columns: ColumnDef<ProductColumn>[] = [
     header: "Sold Out Quantity",
   },
   {
-    accessorKey: "income",
-    header: "Income",
-  },
-  {
     accessorKey: "tax",
     header: "Tax",
+  },
+  {
+    accessorKey: "income",
+    header: "Net Income (After Tax)",
   },
   {
     accessorKey: "profit",

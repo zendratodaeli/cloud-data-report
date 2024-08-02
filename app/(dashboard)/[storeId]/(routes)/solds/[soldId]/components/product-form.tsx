@@ -7,8 +7,8 @@ import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { Product } from "@prisma/client";
 import { Trash } from "lucide-react";
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import React, { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,9 @@ interface SoldFormProps {
 const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+  const [remainQuantity, setRemainQuantity] = useState<number | null>(null);
+  const [originalTotalSoldOut, setOriginalTotalSoldOut] = useState<number>(initialData ? initialData.totalSoldOut : 0);
+
   const params = useParams();
   const router = useRouter();
 
@@ -43,22 +45,37 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
   const toastMessage = initialData ? "Sold Record Updated" : "Sold Record created.";
   const action = initialData ? "Save changes" : "Create";
 
-  const todayDate = format(new Date(), 'yyyy-MM-dd'); // Ensure today's date is correctly formatted
+  const todayDate = format(new Date(), 'yyyy-MM-dd');
 
   const form = useForm<SoldFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? { 
       productId: initialData.productId,
       totalSoldOut: initialData.totalSoldOut,
-      createdAt: format(new Date(initialData.createdAt), 'yyyy-MM-dd'), // Ensure the date is correctly formatted
+      createdAt: format(new Date(initialData.createdAt), 'yyyy-MM-dd'),
     } : {
       productId: '',
       totalSoldOut: 1,
-      createdAt: todayDate, // Use today's date as the default value
+      createdAt: todayDate,
     },
   });
 
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      const selectedProduct = products.find(product => product.id === value.productId);
+      setRemainQuantity(selectedProduct ? selectedProduct.remainQuantity : null);
+    });
+    return () => subscription.unsubscribe();
+  }, [form.watch, products]);
+
   const onSubmit = async (data: SoldFormValues) => {
+    const quantityDifference = data.totalSoldOut - originalTotalSoldOut;
+
+    if (remainQuantity !== null && quantityDifference > remainQuantity) {
+      toast.error(`Cannot sell more than ${remainQuantity} additional items`);
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -134,7 +151,11 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
                   <FormLabel>Product</FormLabel>
                   <Select 
                     disabled={loading} 
-                    onValueChange={field.onChange} 
+                    onValueChange={value => {
+                      field.onChange(value);
+                      const selectedProduct = products.find(product => product.id === value);
+                      setRemainQuantity(selectedProduct ? selectedProduct.remainQuantity : null);
+                    }}
                     value={field.value} 
                     defaultValue={field.value}
                   >
@@ -173,8 +194,14 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
                       disabled={loading}
                       placeholder="Number of items sold"
                       {...field}
+                      max={remainQuantity !== null ? remainQuantity + originalTotalSoldOut : undefined}
                     />
                   </FormControl>
+                  {remainQuantity !== null && (
+                    <FormDescription>
+                      Max available: {remainQuantity + originalTotalSoldOut}
+                    </FormDescription>
+                  )}
                   <FormMessage/>
                 </FormItem>
               )}
