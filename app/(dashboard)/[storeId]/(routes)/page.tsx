@@ -1,7 +1,6 @@
-import SalesProduct  from '@/components/chart/sales-product'
-import UnrealizedProduct from '@/components/chart/unrealized-sales-product';
-import prismadb from '@/lib/prismadb'
-import { auth } from '@clerk/nextjs/server'
+import StorePerformance from "@/components/chart/store-performance";
+import prismadb from "@/lib/prismadb";
+import { auth } from "@clerk/nextjs/server";
 
 const Dashboard = async ({ params }: { params: { storeId: string } }) => {
   const { userId } = auth();
@@ -14,20 +13,19 @@ const Dashboard = async ({ params }: { params: { storeId: string } }) => {
     where: {
       storeId: params.storeId,
       store: {
-        userId: userId
-      }
+        userId: userId,
+      },
     },
     include: {
       category: true,
-      store: true
+      store: true,
     },
     orderBy: {
       createdAt: "desc",
     },
-  })
-  
+  });
 
-  const transformedProducts = products.map(product => ({
+  const transformedProducts = products.map((product) => ({
     ...product,
     price: Number(product.price),
     createdAt: product.createdAt.toISOString(),
@@ -41,20 +39,16 @@ const Dashboard = async ({ params }: { params: { storeId: string } }) => {
       ...product.store,
       createdAt: product.store.createdAt.toISOString(),
       updatedAt: product.store.updatedAt.toISOString(),
-    }
+    },
   }));
 
-
   return (
-    <div className='pt-16 space-y-10'>
+    <div className="pt-16 space-y-10">
       <div>
-        <SalesProduct products={transformedProducts} />
-      </div>
-      <div>
-        <UnrealizedProduct products={transformedProducts}/>
+        <StorePerformance products={transformedProducts} />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Dashboard
+export default Dashboard;

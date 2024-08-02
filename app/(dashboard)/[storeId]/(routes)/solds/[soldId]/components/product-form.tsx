@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { Category, Product } from "@prisma/client";
+import { Product } from "@prisma/client";
 import { Trash } from "lucide-react";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -19,64 +19,56 @@ import { AlertModal } from "@/components/modals/alert-modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formSchema = z.object({
-  name: z.string().min(1),
-  pricePerPiece: z.coerce.number().min(1),
-  capital: z.coerce.number().min(0),
-  quantity: z.coerce.number().min(1),
-  categoryId: z.string().min(1),
+  productId: z.string().min(1),
+  totalSoldOut: z.coerce.number().min(1),
   createdAt: z.string().optional(),
 });
 
-type ProductFormValues = z.infer<typeof formSchema>;
+type SoldFormValues = z.infer<typeof formSchema>;
 
-interface ProductFormProps {
-  initialData: Product | null;
-  categories: Category[];
+interface SoldFormProps {
+  initialData: { id: string; productId: string; totalSoldOut: number; createdAt: Date } | null;
+  products: Product[];
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({ initialData, categories }) => {
+const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   
   const params = useParams();
   const router = useRouter();
 
-  const title = initialData ? "Edit a Product" : "Create a Product";
-  const description = initialData ? "Edit a Product" : "Add a new Product";
-  const toastMessage = initialData ? "Product Updated" : "Product created.";
+  const title = initialData ? "Edit a Sold Record" : "Create a Sold Record";
+  const description = initialData ? "Edit a Sold Record" : "Add a new Sold Record";
+  const toastMessage = initialData ? "Sold Record Updated" : "Sold Record created.";
   const action = initialData ? "Save changes" : "Create";
 
   const todayDate = format(new Date(), 'yyyy-MM-dd'); // Ensure today's date is correctly formatted
 
-  const form = useForm<ProductFormValues>({
+  const form = useForm<SoldFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? { 
-      ...initialData,
-      pricePerPiece: parseFloat(String(initialData?.pricePerPiece)),
-      capital: parseFloat(String(initialData?.capital)),
-      quantity: parseInt(String(initialData?.quantity)),
+      productId: initialData.productId,
+      totalSoldOut: initialData.totalSoldOut,
       createdAt: format(new Date(initialData.createdAt), 'yyyy-MM-dd'), // Ensure the date is correctly formatted
     } : {
-      name: '',
-      pricePerPiece: 0,
-      capital: 0,
-      quantity: 1,
-      categoryId: '',
+      productId: '',
+      totalSoldOut: 1,
       createdAt: todayDate, // Use today's date as the default value
     },
   });
 
-  const onSubmit = async (data: ProductFormValues) => {
+  const onSubmit = async (data: SoldFormValues) => {
     try {
       setLoading(true);
 
-      if(initialData) {
-        await axios.patch(`/api/${params.storeId}/products/${params.productId}`, data);
+      if (initialData) {
+        await axios.patch(`/api/${params.storeId}/solds/${initialData.id}`, data);
       } else {
-        await axios.post(`/api/${params.storeId}/products`, data);
+        await axios.post(`/api/${params.storeId}/solds`, data);
       }
 
-      router.push(`/${params.storeId}/products`);
+      router.push(`/${params.storeId}/solds`);
       router.refresh();
       toast.success(toastMessage);
     } catch (error) {
@@ -90,11 +82,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, categories }) =>
     try {
       setLoading(true);
 
-      await axios.delete(`/api/${params.storeId}/products/${params.productId}`);
+      await axios.delete(`/api/${params.storeId}/solds/${initialData?.id}`);
 
       router.refresh();
-      router.push(`/${params.storeId}/products`);
-      toast.success("Product deleted");
+      router.push(`/${params.storeId}/solds`);
+      toast.success("Sold record deleted");
     } catch (error) {
       toast.error("Something went wrong");
     } finally {
@@ -136,81 +128,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, categories }) =>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FormField
               control={form.control}
-              name="name"
+              name="productId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input 
-                      disabled={loading}
-                      placeholder="Product name..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage/>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="pricePerPiece"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Price Per Piece (Rp)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number"
-                      disabled={loading}
-                      placeholder="9.99"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage/>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="capital"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Capital (Rp)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number"
-                      disabled={loading}
-                      placeholder="100000"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage/>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="quantity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Quantity</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number"
-                      disabled={loading}
-                      placeholder="20"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage/>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="categoryId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
+                  <FormLabel>Product</FormLabel>
                   <Select 
                     disabled={loading} 
                     onValueChange={field.onChange} 
@@ -221,17 +142,17 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, categories }) =>
                       <SelectTrigger>
                         <SelectValue 
                           defaultValue={field.value}
-                          placeholder="Select a category"
+                          placeholder="Select a product"
                         />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map((category) => (
+                      {products.map((product) => (
                         <SelectItem
-                          key={category.id}
-                          value={category.id}
+                          key={product.id}
+                          value={product.id}
                         >
-                          {category.name}
+                          {product.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -242,10 +163,28 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, categories }) =>
             />
             <FormField
               control={form.control}
+              name="totalSoldOut"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Total Sold Out</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number"
+                      disabled={loading}
+                      placeholder="Number of items sold"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage/>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="createdAt"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Created At</FormLabel>
+                  <FormLabel>Date</FormLabel>
                   <FormControl>
                     <Input 
                       type="date"
@@ -267,4 +206,4 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, categories }) =>
   );
 }
 
-export default ProductForm;
+export default SoldForm;

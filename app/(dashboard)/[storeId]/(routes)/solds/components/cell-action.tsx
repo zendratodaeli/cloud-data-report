@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react";
-import { ProductColumn } from "./columns"
+import { SoldColumn } from "./columns"
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -17,7 +17,7 @@ import axios from "axios";
 import { AlertModal } from "@/components/modals/alert-modal";
 
 interface CellActionProps {
-  data: ProductColumn;
+  data: SoldColumn;
 }
 
 export const CellAction: React.FC<CellActionProps> = ({
@@ -37,7 +37,7 @@ export const CellAction: React.FC<CellActionProps> = ({
     try {
       setLoading(true)
 
-      await axios.delete(`/api/${params.storeId}/products/${data.id}`);
+      await axios.delete(`/api/${params.storeId}/solds/${data.id}`);
       router.refresh();
       toast.success("Product deleted")
     } catch (error) {
@@ -71,7 +71,7 @@ export const CellAction: React.FC<CellActionProps> = ({
             <Copy className=" mr-2 h-4 w-4"/>
             Copy Id
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push(`/${params.storeId}/products/${data.id}`)}>
+          <DropdownMenuItem onClick={() => router.push(`/${params.storeId}/solds/${data.id}`)}>
             <Edit className=" mr-2 h-4 w-4"/>
             Update
           </DropdownMenuItem>

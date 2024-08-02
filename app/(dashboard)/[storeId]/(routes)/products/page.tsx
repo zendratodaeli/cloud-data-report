@@ -5,7 +5,7 @@ import { formatter } from "@/lib/utils";
 import ProductClient from "./components/client";
 import DownloadButton from "@/components/download-button";
 import { auth } from "@clerk/nextjs/server";
-import SalesProduct from "@/components/chart/sales-product";
+import StorePerformance from "@/components/chart/store-performance";
 
 const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
   const { userId } = auth();
@@ -24,6 +24,7 @@ const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
     include: {
       category: true,
       store: true,
+      sold: true
     },
     orderBy: {
       createdAt: "desc",
@@ -33,18 +34,29 @@ const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
   const formattedProducts: ProductColumn[] = products.map((item) => ({
     id: item.id,
     name: item.name,
-    isSold: item.isSold,
-    price: formatter.format(item.price.toNumber()),
+    pricePerPiece: formatter.format(item.pricePerPiece),
+    capital: formatter.format(item.capital),
+    quantity: item.quantity,
+    remainQuantity: item.remainQuantity,
+    income: formatter.format(item.income),
+    tax: formatter.format(item.tax),
+    profit: formatter.format(item.profit),
     category: item.category.name,
     createdAt: format(item.createdAt, "MMMM do, yyyy"),
-    storeName: item.store.name,
   }));
+
+  console.log(products, products.map(s => s.sold));
 
   const transformedProducts = products.map((product) => ({
     ...product,
-    price: Number(product.price),
+    pricePerPiece: Number(product.pricePerPiece),
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
+    sold: product.sold.map((soldItem) => ({
+      ...soldItem,
+      createdAt: soldItem.createdAt.toISOString(),
+      updatedAt: soldItem.updatedAt.toISOString(),
+    })),
     category: {
       ...product.category,
       createdAt: product.category.createdAt.toISOString(),
@@ -60,7 +72,7 @@ const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
   return (
     <div className="flex-col pt-16">
       <div className="flex-1 space-y-4 p-8 pt-6">
-        <SalesProduct products={transformedProducts} />
+        <StorePerformance products={transformedProducts} />
         <ProductClient data={formattedProducts} />
         <DownloadButton data={formattedProducts} />
       </div>

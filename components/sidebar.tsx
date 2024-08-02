@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 import {
+  FileInput,
   FileType,
   History,
   LayoutDashboard,
@@ -44,6 +45,12 @@ const SideBar = () => {
       icon: Notebook,
       color: " text-black",
       href: `/${params.storeId}/products`,
+    },
+    {
+      label: "Solds",
+      icon: FileInput,
+      color: " text-black",
+      href: `/${params.storeId}/solds`,
     },
     {
       href: `/${params.storeId}/settings`,
