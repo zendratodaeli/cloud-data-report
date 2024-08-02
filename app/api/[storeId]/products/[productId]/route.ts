@@ -39,6 +39,7 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
       capital,
       quantity,
       categoryId,
+      tax,
       createdAt
     } = body;
 
@@ -93,8 +94,8 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
     const totalSold = existingProduct.sold.reduce((acc, sold) => acc + sold.totalSoldOut, 0);
     const remainQuantity = quantity - totalSold;
     const income = totalSold * pricePerPiece;
-    const tax = income * 0.1;
-    const profit = income - capital;
+    const profit = income - capital - (income * (tax || existingProduct.tax) / 100); // Ensure tax is used as a percentage
+
 
     const product = await prismadb.product.update({
       where: {
@@ -107,7 +108,7 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
         quantity,
         remainQuantity,
         income,
-        tax,
+        tax: tax || existingProduct.tax,
         profit,
         categoryId,
         createdAt: createdAt ? new Date(createdAt) : new Date(),
@@ -120,7 +121,6 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
-
 
 export async function DELETE(req: Request, { params }: {params: {storeId: string, productId: string}}
 ) {

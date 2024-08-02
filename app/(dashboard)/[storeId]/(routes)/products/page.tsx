@@ -1,11 +1,11 @@
-import { format } from "date-fns";
-import prismadb from "@/lib/prismadb";
-import { ProductColumn } from "./components/columns";
-import { formatter } from "@/lib/utils";
+import StorePerformance from "@/components/chart/store-performance";
 import ProductClient from "./components/client";
 import DownloadButton from "@/components/download-button";
+import { formatter } from "@/lib/utils";
+import { format } from "date-fns";
+import { ProductColumn } from "./components/columns";
 import { auth } from "@clerk/nextjs/server";
-import StorePerformance from "@/components/chart/store-performance";
+import prismadb from "@/lib/prismadb";
 
 const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
   const { userId } = auth();
@@ -38,14 +38,13 @@ const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
     capital: formatter.format(item.capital),
     quantity: item.quantity,
     remainQuantity: item.remainQuantity,
+    soldOutQuantity: item.quantity - item.remainQuantity,
     income: formatter.format(item.income),
-    tax: formatter.format(item.tax),
+    tax: `${item.tax}%`,
     profit: formatter.format(item.profit),
     category: item.category.name,
     createdAt: format(item.createdAt, "MMMM do, yyyy"),
   }));
-
-  console.log(products, products.map(s => s.sold));
 
   const transformedProducts = products.map((product) => ({
     ...product,

@@ -41,22 +41,23 @@ model Category {
 }
 
 model Product {
-  id             String   @id @default(uuid())
-  storeId        String
-  store          Store    @relation("StoreToProduct", fields: [storeId], references: [id])
-  categoryId     String
-  category       Category @relation("CategoryToProduct", fields: [categoryId], references: [id])
-  name           String   @unique
-  capital        Int
-  pricePerPiece  Int
-  quantity       Int
-  sold           Sold[]   @relation("ProductToSold")
-  remainQuantity Int
-  income         Int
-  tax            Int
-  profit         Int
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(uuid())
+  storeId         String
+  store           Store    @relation("StoreToProduct", fields: [storeId], references: [id])
+  categoryId      String
+  category        Category @relation("CategoryToProduct", fields: [categoryId], references: [id])
+  name            String   @unique
+  capital         Int
+  pricePerPiece   Int
+  quantity        Int
+  sold            Sold[]   @relation("ProductToSold")
+  soldOutQuantity Int      @default(0)
+  remainQuantity  Int
+  income          Int
+  tax             Int
+  profit          Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([storeId])
   @@index([categoryId])

@@ -24,6 +24,7 @@ const formSchema = z.object({
   capital: z.coerce.number().min(0),
   quantity: z.coerce.number().min(1),
   categoryId: z.string().min(1),
+  tax: z.coerce.number().min(0).max(100),  // Add tax field with validation
   createdAt: z.string().optional(),
 });
 
@@ -55,6 +56,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, categories }) =>
       pricePerPiece: parseFloat(String(initialData?.pricePerPiece)),
       capital: parseFloat(String(initialData?.capital)),
       quantity: parseInt(String(initialData?.quantity)),
+      tax: parseFloat(String(initialData?.tax)),  // Add tax default value
       createdAt: format(new Date(initialData.createdAt), 'yyyy-MM-dd'), // Ensure the date is correctly formatted
     } : {
       name: '',
@@ -62,6 +64,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, categories }) =>
       capital: 0,
       quantity: 1,
       categoryId: '',
+      tax: 0,  // Add default tax value
       createdAt: todayDate, // Use today's date as the default value
     },
   });
@@ -236,6 +239,24 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, categories }) =>
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage/>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="tax"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tax (%)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number"
+                      disabled={loading}
+                      placeholder="10"
+                      {...field}
+                    />
+                  </FormControl>
                   <FormMessage/>
                 </FormItem>
               )}

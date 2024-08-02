@@ -13,6 +13,7 @@ export async function POST(req: Request, { params }: { params: { storeId: string
       capital,
       quantity,
       categoryId,
+      tax,
       createdAt
     } = body;
 
@@ -26,6 +27,10 @@ export async function POST(req: Request, { params }: { params: { storeId: string
 
     if (!pricePerPiece) {
       return new NextResponse("Price per piece is required", { status: 400 });
+    }
+
+    if (!tax) {
+      return new NextResponse("Tax is required", { status: 400 });
     }
 
     if (!capital) {
@@ -63,8 +68,9 @@ export async function POST(req: Request, { params }: { params: { storeId: string
         quantity,
         remainQuantity: quantity,
         income: 0,
-        tax: 0,
+        tax: tax || 0,
         profit: 0,
+        soldOutQuantity: 0,
         categoryId,
         createdAt: createdAt ? new Date(createdAt) : new Date(),
         storeId: params.storeId,
@@ -96,13 +102,22 @@ export async function GET(req: Request, { params }: { params: { storeId: string 
       },
       include: {
         category: true,
+        sold: true
       },
       orderBy: {
         createdAt: 'desc'
       }
     });
+    
+    const productsWithSoldOutQuantity = products.map(product => {
+      const soldOutQuantity = product.sold.reduce((total, sold) => total + sold.totalSoldOut, 0);
+      return {
+        ...product,
+        soldOutQuantity,
+      };
+    });
 
-    return NextResponse.json(products);
+    return NextResponse.json(productsWithSoldOutQuantity);
 
   } catch (error) {
     console.log("[products_get]", error);

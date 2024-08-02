@@ -33,7 +33,6 @@ export async function GET(req: Request, { params }: { params: { soldId: string }
   }
 }
 
-
 export async function PATCH(req: Request, { params }: { params: { storeId: string, soldId: string } }) {
   try {
     const { userId } = auth();
@@ -96,17 +95,17 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
 
     const totalSold = product.sold.reduce((acc, sold) => acc + (sold.id === soldRecord.id ? totalSoldOut : sold.totalSoldOut), 0);
     const remainQuantity = product.quantity - totalSold;
-    const income = totalSold * product.pricePerPiece;
-    const tax = income * 0.1;
-    const profit = income - product.capital;
+    const grossIncome = totalSold * product.pricePerPiece;
+    const netIncome = grossIncome - (grossIncome * (product.tax / 100)); // Calculate net income after tax
+    const profit = netIncome - product.capital;
 
     await prismadb.product.update({
       where: { id: productId },
       data: {
         remainQuantity,
-        income,
-        tax,
+        income: netIncome, // Store net income
         profit,
+        // Do not update the tax here as it is static
       },
     });
 
@@ -117,6 +116,7 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
     return new NextResponse("Internal error", { status: 500 });
   }
 }
+
 
 export async function DELETE(req: Request, { params }: { params: { storeId: string, soldId: string } }) {
   try {
@@ -160,17 +160,17 @@ export async function DELETE(req: Request, { params }: { params: { storeId: stri
 
     const totalSold = product.sold.reduce((acc, sold) => acc + (sold.id !== soldRecord.id ? sold.totalSoldOut : 0), 0);
     const remainQuantity = product.quantity - totalSold;
-    const income = totalSold * product.pricePerPiece;
-    const tax = income * 0.1;
-    const profit = income - product.capital;
+    const grossIncome = totalSold * product.pricePerPiece;
+    const netIncome = grossIncome - (grossIncome * (product.tax / 100)); // Use the existing tax percentage to calculate net income
+    const profit = netIncome - product.capital;
 
     await prismadb.product.update({
       where: { id: soldRecord.productId },
       data: {
         remainQuantity,
-        income,
-        tax,
+        income: netIncome, // Store net income
         profit,
+        // Do not update the tax here as it is static
       },
     });
 
@@ -181,3 +181,4 @@ export async function DELETE(req: Request, { params }: { params: { storeId: stri
     return new NextResponse("Internal error", { status: 500 });
   }
 }
+

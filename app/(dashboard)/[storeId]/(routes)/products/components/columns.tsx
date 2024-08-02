@@ -1,5 +1,11 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
+import { format } from "date-fns";
+import prismadb from "@/lib/prismadb";
+import { formatter } from "@/lib/utils";
+import DownloadButton from "@/components/download-button";
+import { auth } from "@clerk/nextjs/server";
+import StorePerformance from "@/components/chart/store-performance";
 
 export type ProductColumn = {
   id: string;
@@ -8,13 +14,13 @@ export type ProductColumn = {
   capital: string;
   quantity: number;
   remainQuantity: number;
+  soldOutQuantity: number;
   income: string;
   tax: string;
   profit: string;
   category: string;
   createdAt: string;
 };
-
 
 export const columns: ColumnDef<ProductColumn>[] = [
   {
@@ -38,6 +44,10 @@ export const columns: ColumnDef<ProductColumn>[] = [
     header: "In Stock",
   },
   {
+    accessorKey: "soldOutQuantity",  // Add this column
+    header: "Sold Out Quantity",
+  },
+  {
     accessorKey: "income",
     header: "Income",
   },
@@ -47,7 +57,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
   },
   {
     accessorKey: "profit",
-    header: "Profit",
+    header: "Profit (After Tax)",
   },
   {
     accessorKey: "category",
@@ -62,4 +72,3 @@ export const columns: ColumnDef<ProductColumn>[] = [
     cell: ({ row }) => <CellAction data={row.original} />,
   },
 ];
-

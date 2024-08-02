@@ -56,17 +56,17 @@ export async function POST(req: Request, { params }: { params: { storeId: string
 
     const totalSold = product.sold.reduce((acc, sold) => acc + sold.totalSoldOut, 0) + totalSoldOut;
     const remainQuantity = product.quantity - totalSold;
-    const income = totalSold * product.pricePerPiece;
-    const tax = income * 0.1;
-    const profit = income - product.capital;
+    const grossIncome = totalSold * product.pricePerPiece;
+    const netIncome = grossIncome - (grossIncome * (product.tax / 100)); // Calculate net income after tax
+    const profit = netIncome - product.capital;
 
     await prismadb.product.update({
       where: { id: productId },
       data: {
         remainQuantity,
-        income,
-        tax,
+        income: netIncome, // Store net income
         profit,
+        // Do not update the tax here as it is static
       },
     });
 
@@ -77,6 +77,7 @@ export async function POST(req: Request, { params }: { params: { storeId: string
     return new NextResponse("Internal error", { status: 500 });
   }
 }
+
 
 export async function GET(req: Request, { params }: { params: { storeId: string } }) {
   try {
