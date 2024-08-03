@@ -71,6 +71,7 @@ export async function POST(req: Request, { params }: { params: { storeId: string
         grossIncome: 0,
         tax: tax || 0,
         profit: 0,
+        grossProfit: 0,
         soldOutQuantity: 0,
         categoryId,
         createdAt: createdAt ? new Date(createdAt) : new Date(),

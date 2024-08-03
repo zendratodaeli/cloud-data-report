@@ -1,18 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import * as XLSX from "xlsx";
 import { Download, Option, Printer } from "lucide-react";
-import { ProductColumn } from "@/app/(dashboard)/[storeId]/(routes)/products/components/columns";
+import { ProductColumn } from "@/types";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-
+import html2canvas from "html2canvas";
 import { Button } from "@/components/ui/button";
+import { Workbook } from "exceljs";
+import { saveAs } from "file-saver";
 import {
   Drawer,
   DrawerClose,
   DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -21,78 +21,112 @@ import {
 
 interface DownloadButtonProps {
   data: ProductColumn[];
+  chartRef: React.RefObject<HTMLDivElement>;
 }
 
-const DownloadButton: React.FC<DownloadButtonProps> = ({ data }) => {
+const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef }) => {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const onExportLocal = () => {
-    const fileName = "Products_Data.xlsx";
-
-    const headers = [
-      "Number",
-      "Store",
-      "Name",
-      "Price",
-      "Category",
-      "Status",
-      "Created At",
-    ];
-
-    const formattedData = data.map((eachData, index) => ({
-      Number: index + 1,
-      Store: eachData.storeName,
-      Name: eachData.name,
-      Price: eachData.price,
-      Category: eachData.category,
-      Status: eachData.isSold,
-      "Created At": eachData.createdAt,
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(formattedData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "binary" });
-
-    const s2ab = (s: string) => {
-      const buf = new ArrayBuffer(s.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff;
-      return buf;
-    };
-
-    const blob = new Blob([s2ab(wbout)], { type: "application/octet-stream" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+  const captureChart = async () => {
+    if (chartRef.current) {
+      const canvas = await html2canvas(chartRef.current, { useCORS: true });
+      return canvas.toDataURL("image/png");
+    }
+    return null;
   };
 
-  const onExportPDF = () => {
+  const onExportLocal = async () => {
+    const chartImage = await captureChart();
+    const workbook = new Workbook();
+    const worksheet = workbook.addWorksheet("Products Data");
+
+    worksheet.columns = [
+      { header: "Number", key: "number", width: 10 },
+      { header: "Name", key: "name", width: 30 },
+      { header: "Price Per Piece", key: "pricePerPiece", width: 15 },
+      { header: "Capital", key: "capital", width: 15 },
+      { header: "Quantity", key: "quantity", width: 10 },
+      { header: "Remain Quantity", key: "remainQuantity", width: 15 },
+      { header: "Sold Out Quantity", key: "soldOutQuantity", width: 15 },
+      { header: "Gross Income", key: "grossIncome", width: 15 },
+      { header: "Gross Profit", key: "grossProfit", width: 15 },
+      { header: "Income", key: "income", width: 15 },
+      { header: "Tax", key: "tax", width: 10 },
+      { header: "Profit", key: "profit", width: 15 },
+      { header: "Category", key: "category", width: 20 },
+      { header: "Created At", key: "createdAt", width: 20 },
+    ];
+
+    data.forEach((eachData, index) => {
+      worksheet.addRow({
+        number: index + 1,
+        name: eachData.name,
+        pricePerPiece: eachData.pricePerPiece,
+        capital: eachData.capital,
+        quantity: eachData.quantity,
+        remainQuantity: eachData.remainQuantity,
+        soldOutQuantity: eachData.soldOutQuantity,
+        grossIncome: eachData.grossIncome,
+        grossProfit: eachData.grossProfit,
+        income: eachData.income,
+        tax: eachData.tax,
+        profit: eachData.profit,
+        category: eachData.category,
+        createdAt: eachData.createdAt,
+      });
+    });
+
+    if (chartImage) {
+      const imageId = workbook.addImage({
+        base64: chartImage,
+        extension: "png",
+      });
+      worksheet.addImage(imageId, {
+        tl: { col: 0, row: data.length + 2 },
+        ext: { width: 500, height: 300 },
+      });
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/octet-stream" });
+    saveAs(blob, "Products_Data.xlsx");
+  };
+
+  const onExportPDF = async () => {
     const doc = new jsPDF();
+    const chartImage = await captureChart();
+
+    if (chartImage) {
+      doc.addImage(chartImage, "PNG", 10, 10, 180, 80);
+    }
+
     const headers = [
-      ["Number", "Store", "Name", "Price", "Category", "Status", "Created At"],
+      ["Number", "Name", "Price Per Piece", "Capital", "Quantity", "Remain Quantity", "Sold Out Quantity", "Gross Income", "Gross Profit", "Income", "Tax", "Profit", "Category", "Created At"],
     ];
 
     const formattedData = data.map((eachData, index) => [
       index + 1,
-      eachData.storeName,
       eachData.name,
-      eachData.price,
+      eachData.pricePerPiece,
+      eachData.capital,
+      eachData.quantity,
+      eachData.remainQuantity,
+      eachData.soldOutQuantity,
+      eachData.grossIncome,
+      eachData.grossProfit,
+      eachData.income,
+      eachData.tax,
+      eachData.profit,
       eachData.category,
-      eachData.isSold,
       eachData.createdAt,
     ]);
 
     (doc as any).autoTable({
+      startY: chartImage ? 100 : 20,
       head: headers,
       body: formattedData,
     });
@@ -100,15 +134,24 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ data }) => {
     doc.save("Products_Data.pdf");
   };
 
-  const onPrint = () => {
+  const onPrint = async () => {
+    const chartImage = await captureChart();
     const printWindow = window.open("", "_blank");
+
     const headers = [
       "Number",
-      "Store",
       "Name",
-      "Price",
+      "Price Per Piece",
+      "Capital",
+      "Quantity",
+      "Remain Quantity",
+      "Sold Out Quantity",
+      "Gross Income",
+      "Gross Profit",
+      "Income",
+      "Tax",
+      "Profit",
       "Category",
-      "Status",
       "Created At",
     ];
 
@@ -117,11 +160,18 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ data }) => {
         (eachData, index) => `
       <tr>
         <td>${index + 1}</td>
-        <td>${eachData.storeName}</td>
         <td>${eachData.name}</td>
-        <td>${eachData.price}</td>
+        <td>${eachData.pricePerPiece}</td>
+        <td>${eachData.capital}</td>
+        <td>${eachData.quantity}</td>
+        <td>${eachData.remainQuantity}</td>
+        <td>${eachData.soldOutQuantity}</td>
+        <td>${eachData.grossIncome}</td>
+        <td>${eachData.grossProfit}</td>
+        <td>${eachData.income}</td>
+        <td>${eachData.tax}</td>
+        <td>${eachData.profit}</td>
         <td>${eachData.category}</td>
-        <td>${eachData.isSold}</td>
         <td>${eachData.createdAt}</td>
       </tr>
     `
@@ -149,6 +199,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ data }) => {
         </head>
         <body>
           <h1>Products Data</h1>
+          ${chartImage ? `<img src="${chartImage}" style="width:100%; height:auto;"/>` : ""}
           <table>
             <thead>
               <tr>

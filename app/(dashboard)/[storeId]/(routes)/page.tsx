@@ -1,54 +1,11 @@
-import StorePerformance from "@/components/chart/store-performance";
-import prismadb from "@/lib/prismadb";
-import { auth } from "@clerk/nextjs/server";
+import React from 'react'
 
-const Dashboard = async ({ params }: { params: { storeId: string } }) => {
-  const { userId } = auth();
-
-  if (!userId) {
-    return null;
-  }
-
-  const products = await prismadb.product.findMany({
-    where: {
-      storeId: params.storeId,
-      store: {
-        userId: userId,
-      },
-    },
-    include: {
-      category: true,
-      store: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-
-  const transformedProducts = products.map((product) => ({
-    ...product,
-    price: Number(product.price),
-    createdAt: product.createdAt.toISOString(),
-    updatedAt: product.updatedAt.toISOString(),
-    category: {
-      ...product.category,
-      createdAt: product.category.createdAt.toISOString(),
-      updatedAt: product.category.updatedAt.toISOString(),
-    },
-    store: {
-      ...product.store,
-      createdAt: product.store.createdAt.toISOString(),
-      updatedAt: product.store.updatedAt.toISOString(),
-    },
-  }));
-
+const Dashboard = () => {
   return (
-    <div className="pt-16 space-y-10">
-      <div>
-        <StorePerformance products={transformedProducts} />
-      </div>
+    <div className='pt-16'>
+      Dashboard
     </div>
-  );
-};
+  )
+}
 
-export default Dashboard;
+export default Dashboard

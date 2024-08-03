@@ -12,6 +12,7 @@ export type ProductColumn = {
   grossIncome: string;  // Add this field
   income: string;
   tax: string;
+  grossProfit: string; // Add this field
   profit: string;
   category: string;
   createdAt: string;
@@ -50,6 +51,10 @@ export const columns: ColumnDef<ProductColumn>[] = [
   {
     accessorKey: "grossIncome",  // Add this column
     header: "Gross Income (Before Tax)",
+  },
+  {
+    accessorKey: "grossProfit",
+    header: "Gross Profit (Before Tax)", // Add this column
   },
   {
     accessorKey: "income",

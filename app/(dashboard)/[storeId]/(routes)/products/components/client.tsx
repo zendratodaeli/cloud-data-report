@@ -7,7 +7,7 @@ import { Plus } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import React from "react"
 import { ProductColumn, columns } from "./columns"
-import { DataTable } from "@/components/ui/data-table"
+import { DataTableCustom } from "@/components/ui/data-table-custom"
 
 interface ProductClientProps {
   data: ProductColumn[]
@@ -32,7 +32,7 @@ const ProductClient: React.FC<ProductClientProps> = ({ data }) => {
         </Button>
       </div> 
       <Separator/>
-      <DataTable searchKey="name" dateKey="createdAt" columns={columns} data={data} />
+      <DataTableCustom searchKey="name" dateKey="createdAt" columns={columns} data={data} />
     </>
   )
 }

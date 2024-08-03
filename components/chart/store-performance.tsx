@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import {
   Area,
@@ -20,7 +18,6 @@ import {
   eachWeekOfInterval,
   eachMonthOfInterval,
 } from "date-fns";
-
 import {
   Card,
   CardContent,
@@ -36,49 +33,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUser } from "@clerk/nextjs";
-import { formatter } from "@/lib/utils"; // Ensure the correct path to your formatter utility
+import { formatter } from "@/lib/utils";
 import { ChartConfig, ChartContainer } from "../ui/chart";
-
-interface Product {
-  id: string;
-  storeId: string;
-  categoryId: string;
-  name: string;
-  pricePerPiece: number;
-  capital: number;
-  quantity: number;
-  remainQuantity: number;
-  income: number;
-  tax: number;
-  profit: number;
-  createdAt: string;
-  updatedAt: string;
-  category: {
-    id: string;
-    name: string;
-    storeId: string;
-    createdAt: string;
-    updatedAt: string;
-  };
-  store: {
-    id: string;
-    userId: string;
-    name: string;
-    createdAt: string;
-    updatedAt: string;
-  };
-  sold: {
-    id: string;
-    productId: string;
-    totalSoldOut: number;
-    income: number;
-    createdAt: string;
-    updatedAt: string;
-  }[];
-}
+import { Product } from "@/types";
 
 interface StorePerformanceProps {
   products: Product[];
+  chartRef: React.RefObject<HTMLDivElement>;
 }
 
 const chartConfig = {
@@ -96,7 +57,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const StorePerformance: React.FC<StorePerformanceProps> = ({ products }) => {
+const StorePerformance: React.FC<StorePerformanceProps> = ({ products, chartRef }) => {
   const [timeRange, setTimeRange] = React.useState("7d");
   const [selectedProduct, setSelectedProduct] = React.useState<string>("all");
   const { user } = useUser();
@@ -211,7 +172,7 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({ products }) => {
   });
 
   return (
-    <div>
+    <div ref={chartRef}>
       <Card>
         <CardHeader className="flex items-center sm:items-start gap-2 space-y-0 border-b py-5 sm:flex-row">
           <div className="grid flex-1 gap-1 text-center sm:text-left">
@@ -383,7 +344,7 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({ products }) => {
                 stroke="#00FF00"
                 name="Net Profit"
               />
-              <Legend  />
+              <Legend />
             </AreaChart>
           </ChartContainer>
           <ChartContainer

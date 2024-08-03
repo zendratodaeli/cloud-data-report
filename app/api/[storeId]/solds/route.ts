@@ -57,8 +57,9 @@ export async function POST(req: Request, { params }: { params: { storeId: string
     const totalSold = product.sold.reduce((acc, sold) => acc + sold.totalSoldOut, 0) + totalSoldOut;
     const remainQuantity = product.quantity - totalSold;
     const grossIncome = totalSold * product.pricePerPiece;
+    const grossProfit = grossIncome - product.capital; // Calculate gross profit before tax
     const netIncome = grossIncome - (grossIncome * (product.tax / 100)); // Calculate net income after tax
-    const profit = netIncome - product.capital;
+    const profit = netIncome - product.capital; // Calculate profit after tax
 
     await prismadb.product.update({
       where: { id: productId },
@@ -66,7 +67,8 @@ export async function POST(req: Request, { params }: { params: { storeId: string
         remainQuantity,
         grossIncome, // Store gross income
         income: netIncome, // Store net income
-        profit,
+        grossProfit, // Store gross profit before tax
+        profit, // Store profit after tax
         // Do not update the tax here as it is static
       },
     });

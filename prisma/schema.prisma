@@ -56,6 +56,7 @@ model Product {
   grossIncome     Int      @default(0)
   income          Int
   tax             Int
+  grossProfit     Int      @default(0)
   profit          Int
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
