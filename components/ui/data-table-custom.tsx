@@ -148,11 +148,13 @@ export function DataTableCustom<TData extends DataItem, TValue>({
               throw new Error(`Missing categoryId for product: ${item.name}`);
             }
             return {
-              storeId: item.storeId,
               name: item.name,
-              price: item.price,
+              pricePerPiece: item.pricePerPiece,
               categoryId: item.categoryId,
-              isSold: item.isSold.toLowerCase() === "true", // Convert to boolean
+              capital: item.capital,
+              quantity: item.quantity,
+              tax: item.tax,
+              createdAt: item.createdAt ? format(new Date(item.createdAt), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
             };
           });
 
@@ -224,7 +226,6 @@ export function DataTableCustom<TData extends DataItem, TValue>({
   const currentPath = window.location.pathname;
   const productsPath = `/${params.storeId}/products`;
 
-  // Calculate the total profit for the filtered data
   const totalProfit = filteredData.reduce((total, item) => {
     const profitStr = item.profit.replace(/[^\d,-]/g, "").replace(",", ".");
     const profit = parseFloat(profitStr);
@@ -354,9 +355,9 @@ export function DataTableCustom<TData extends DataItem, TValue>({
           />
         </div>
       </div>
-      <div className="flex py-4">
+      <div className="md:flex py-4">
         <Card>
-          <CardContent className="p-0 flex py-3 px-3 font-semibold">
+          <CardContent className="py-3 px-3 font-semibold">
             <span className="font-semibold pr-4">Today, {currentDate}</span> Total Profit: {formattedTotalProfit}
           </CardContent>
         </Card>

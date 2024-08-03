@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { Download, Option, Printer } from "lucide-react";
 import { ProductColumn } from "@/types";
@@ -9,15 +7,15 @@ import html2canvas from "html2canvas";
 import { Button } from "@/components/ui/button";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
+
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface DownloadButtonProps {
   data: ProductColumn[];
@@ -96,43 +94,6 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef }) => {
     saveAs(blob, "Products_Data.xlsx");
   };
 
-  const onExportPDF = async () => {
-    const doc = new jsPDF();
-    const chartImage = await captureChart();
-
-    if (chartImage) {
-      doc.addImage(chartImage, "PNG", 10, 10, 180, 80);
-    }
-
-    const headers = [
-      ["Number", "Name", "Price Per Piece", "Capital", "Quantity", "Remain Quantity", "Sold Out Quantity", "Gross Income", "Gross Profit", "Income", "Tax", "Profit", "Category", "Created At"],
-    ];
-
-    const formattedData = data.map((eachData, index) => [
-      index + 1,
-      eachData.name,
-      eachData.pricePerPiece,
-      eachData.capital,
-      eachData.quantity,
-      eachData.remainQuantity,
-      eachData.soldOutQuantity,
-      eachData.grossIncome,
-      eachData.grossProfit,
-      eachData.income,
-      eachData.tax,
-      eachData.profit,
-      eachData.category,
-      eachData.createdAt,
-    ]);
-
-    (doc as any).autoTable({
-      startY: chartImage ? 100 : 20,
-      head: headers,
-      body: formattedData,
-    });
-
-    doc.save("Products_Data.pdf");
-  };
 
   const onPrint = async () => {
     const chartImage = await captureChart();
@@ -190,7 +151,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef }) => {
             th, td {
               border: 1px solid black;
               padding: 8px;
-              text-align: left;
+              text-align: center;
             }
             th {
               background-color: #f2f2f2;
@@ -199,7 +160,11 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef }) => {
         </head>
         <body>
           <h1>Products Data</h1>
-          ${chartImage ? `<img src="${chartImage}" style="width:100%; height:auto;"/>` : ""}
+          ${
+            chartImage
+              ? `<img src="${chartImage}" style="width:100%; height:auto;"/>`
+              : ""
+          }
           <table>
             <thead>
               <tr>
@@ -228,56 +193,33 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef }) => {
   }
 
   return (
-    <Drawer>
-      <DrawerTrigger>
+    <DropdownMenu>
+      <DropdownMenuTrigger>
         <div className="flex items-center flex-1">
           <Option className="h-5 w-5 mr-3" />
-          <Button variant={"outline"}>
-            Download Options
-          </Button>
+          <Button variant={"outline"}>Download Options</Button>
         </div>
-      </DrawerTrigger>
-      <DrawerContent className="h-1/2 lg:h-1/3">
-        <DrawerHeader>
-          <DrawerTitle className="text-center mb-5">
-            Choose one of the options
-          </DrawerTitle>
-          <div className="grid grid-cols-1 lg:grid-cols-3 space-y-4 lg:space-y-0 lg:space-x-10">
-            <div>
-              <Button
-                onClick={onExportLocal}
-                variant={"outline"}
-                className="w-full"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Download as Excel
-              </Button>
-            </div>
-            <div>
-              <Button
-                onClick={onExportPDF}
-                variant={"outline"}
-                className="w-full"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Download as PDF
-              </Button>
-            </div>
-            <div>
-              <Button onClick={onPrint} variant={"outline"} className="w-full">
-                <Printer className="mr-2 h-4 w-4" />
-                Print
-              </Button>
-            </div>
-          </div>
-        </DrawerHeader>
-        <DrawerFooter>
-          <DrawerClose>
-            <Button variant="default">Cancel</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>
+          <Button
+            onClick={onExportLocal}
+            variant={"outline"}
+            className="w-full"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Download as Excel
+          </Button>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Button onClick={onPrint} variant={"outline"} className="w-full">
+            <Printer className="mr-2 h-4 w-4" />
+            Print
+          </Button>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

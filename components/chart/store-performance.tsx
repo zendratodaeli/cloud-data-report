@@ -36,6 +36,7 @@ import { useUser } from "@clerk/nextjs";
 import { formatter } from "@/lib/utils";
 import { ChartConfig, ChartContainer } from "../ui/chart";
 import { Product } from "@/types";
+import { Button } from "../ui/button";
 
 interface StorePerformanceProps {
   products: Product[];
@@ -57,7 +58,10 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const StorePerformance: React.FC<StorePerformanceProps> = ({ products, chartRef }) => {
+const StorePerformance: React.FC<StorePerformanceProps> = ({
+  products,
+  chartRef,
+}) => {
   const [timeRange, setTimeRange] = React.useState("7d");
   const [selectedProduct, setSelectedProduct] = React.useState<string>("all");
   const { user } = useUser();
@@ -197,30 +201,30 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({ products, chartRef 
               )}
             </div>
           </div>
-          <div className="flex flex-col space-y-2 md:space-y-0 md:flex-row md:space-x-2">
+          <div className="flex flex-col space-y-5 md:space-y-0 md:flex-row md:space-x-2">
             <div>
               <Select value={timeRange} onValueChange={setTimeRange}>
                 <SelectTrigger
-                  className="w-[160px] rounded-lg sm:ml-auto"
+                  className="w-[160px] rounded-lg "
                   aria-label="Select a value"
                 >
                   <SelectValue placeholder="Select time range" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
                   <SelectItem value="7d" className="rounded-lg">
-                    Last 7 days
+                    <Button variant="link">Last 7 days</Button>
                   </SelectItem>
                   <SelectItem value="30d" className="rounded-lg">
-                    Last 30 days
+                    <Button variant="link">Last 30 days</Button>
                   </SelectItem>
                   <SelectItem value="6m" className="rounded-lg">
-                    Last 6 months
+                    <Button variant="link">Last 6 months</Button>
                   </SelectItem>
                   <SelectItem value="1y" className="rounded-lg">
-                    Last 1 year
+                    <Button variant="link">Last 1 year</Button>
                   </SelectItem>
                   <SelectItem value="all" className="rounded-lg">
-                    All time
+                    <Button variant="link">All time</Button>
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -238,7 +242,7 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({ products, chartRef 
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
                   <SelectItem value="all" className="rounded-lg">
-                    All Products
+                    <Button variant="link">All Products</Button>
                   </SelectItem>
                   {Array.from(
                     new Set(products.map((product) => product.name))
@@ -248,7 +252,7 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({ products, chartRef 
                       value={productName}
                       className="rounded-lg"
                     >
-                      {productName}
+                      <Button variant="link">{productName}</Button>
                     </SelectItem>
                   ))}
                 </SelectContent>

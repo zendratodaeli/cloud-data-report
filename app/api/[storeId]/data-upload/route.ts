@@ -29,13 +29,21 @@ export async function POST(
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
-    // Validate and process the array of product data
     const products = body.map((product: any) => ({
-      storeId: params.storeId,
       name: product.name,
-      price: product.price,
       categoryId: product.categoryId,
-      isSold: product.isSold,
+      pricePerPiece: parseFloat(product.pricePerPiece.replace(/[^0-9.-]+/g, "")), // Convert to float
+      capital: parseFloat(product.capital.replace(/[^0-9.-]+/g, "")), // Convert to float
+      quantity: parseInt(product.quantity, 10), // Convert to int
+      storeId: params.storeId,
+      remainQuantity: parseInt(product.quantity, 10), // Convert to int
+      income: 0,
+      grossIncome: 0,
+      tax: parseFloat(product.tax.replace(/[^0-9.-]+/g, "")) || 0, // Convert to float, default to 0 if not present
+      profit: 0,
+      grossProfit: 0,
+      soldOutQuantity: 0,
+      createdAt: product.createdAt ? new Date(product.createdAt) : new Date(),
     }));
 
     const product = await prismadb.product.createMany({
