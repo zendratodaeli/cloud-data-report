@@ -180,24 +180,24 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({ products, chartRef 
             <CardDescription>
               Showing total sales for the selected time range
             </CardDescription>
-            <div className="text-large font-bold">
+            <div className="text-large font-semibold">
               Total Net Income:{" "}
               {formatter.format(
                 mergedData.reduce((acc, item) => acc + item.netIncome, 0)
               )}
             </div>
-            <div className="text-large font-bold">
+            <div className="text-large font-semibold">
               Total Quantity Sold:{" "}
               {mergedData.reduce((acc, item) => acc + item.quantity, 0)}
             </div>
-            <div className="text-large font-bold">
+            <div className="text-large font-semibold">
               Total Profit:{" "}
               {formatter.format(
                 mergedData.reduce((acc, item) => acc + item.profit, 0)
               )}
             </div>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex flex-col space-y-2 md:space-y-0 md:flex-row md:space-x-2">
             <div>
               <Select value={timeRange} onValueChange={setTimeRange}>
                 <SelectTrigger

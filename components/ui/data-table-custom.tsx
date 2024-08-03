@@ -56,9 +56,7 @@ export function DataTableCustom<TData extends DataItem, TValue>({
   dateKey,
 }: DataTableCustomProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [dateFilter, setDateFilter] = useState<string | undefined>(
-    format(new Date(), "yyyy-MM-dd")
-  );
+  const [dateFilter, setDateFilter] = useState<string | undefined>(undefined);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [filteredData, setFilteredData] = useState<TData[]>(data);
@@ -94,7 +92,6 @@ export function DataTableCustom<TData extends DataItem, TValue>({
 
   useEffect(() => {
     setIsMounted(true);
-    setDateFilter(format(new Date(), "yyyy-MM-dd"));
   }, [data]);
 
   useEffect(() => {
@@ -103,16 +100,9 @@ export function DataTableCustom<TData extends DataItem, TValue>({
     );
   }, [columnFilters, table]);
 
-  const createMarkup = (htmlContent: string) => {
-    return { __html: DOMPurify.sanitize(htmlContent) };
-  };
-
-  const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = event.target;
-    setDateFilter(value);
-
-    if (value) {
-      const parsedDate = new Date(value);
+  useEffect(() => {
+    if (dateFilter) {
+      const parsedDate = new Date(dateFilter);
       const formattedDate = format(parsedDate, "MMMM do, yyyy");
 
       setColumnFilters((old) => {
@@ -126,6 +116,15 @@ export function DataTableCustom<TData extends DataItem, TValue>({
     } else {
       setColumnFilters((old) => old.filter((filter) => filter.id !== dateKey));
     }
+  }, [dateFilter]);
+
+  const createMarkup = (htmlContent: string) => {
+    return { __html: DOMPurify.sanitize(htmlContent) };
+  };
+
+  const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    setDateFilter(value);
   };
 
   const handleFileUpload = async (uploadedFile: File | null) => {
@@ -225,8 +224,8 @@ export function DataTableCustom<TData extends DataItem, TValue>({
   const currentPath = window.location.pathname;
   const productsPath = `/${params.storeId}/products`;
 
-  // Calculate the total profit
-  const totalProfit = data.reduce((total, item) => {
+  // Calculate the total profit for the filtered data
+  const totalProfit = filteredData.reduce((total, item) => {
     const profitStr = item.profit.replace(/[^\d,-]/g, "").replace(",", ".");
     const profit = parseFloat(profitStr);
     return total + profit;
@@ -236,6 +235,8 @@ export function DataTableCustom<TData extends DataItem, TValue>({
     style: "currency",
     currency: "IDR",
   }).format(totalProfit);
+
+   const currentDate = format(new Date(), "MMMM do, yyyy");
 
   return (
     <div>
@@ -355,8 +356,8 @@ export function DataTableCustom<TData extends DataItem, TValue>({
       </div>
       <div className="flex py-4">
         <Card>
-          <CardContent className="p-0 flex py-3 px-3">
-            Total Profit: {formattedTotalProfit}
+          <CardContent className="p-0 flex py-3 px-3 font-semibold">
+            <span className="font-semibold pr-4">Today, {currentDate}</span> Total Profit: {formattedTotalProfit}
           </CardContent>
         </Card>
       </div>
