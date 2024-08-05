@@ -6,8 +6,10 @@ export type SoldColumn = {
   productName: string;
   totalSoldOut: number;
   income: string;
+  netProfit: string;
   createdAt: string;
 };
+
 
 export const columns: ColumnDef<SoldColumn>[] = [
   {
@@ -23,6 +25,10 @@ export const columns: ColumnDef<SoldColumn>[] = [
     header: "Income",
   },
   {
+    accessorKey: "netProfit",
+    header: "Net Profit",
+  },
+  {
     accessorKey: "createdAt",
     header: "Date",
   },
@@ -31,3 +37,4 @@ export const columns: ColumnDef<SoldColumn>[] = [
     cell: ({ row }) => <CellAction data={row.original} />,
   },
 ];
+

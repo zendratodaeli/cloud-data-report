@@ -71,6 +71,7 @@ model Sold {
   product      Product  @relation("ProductToSold", fields: [productId], references: [id])
   totalSoldOut Int
   income       Int
+  netProfit    Int
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

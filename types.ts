@@ -3,6 +3,7 @@ export interface Sold {
   id: string;
   productId: string;
   totalSoldOut: number;
+  netProfit: number
   income: number;
   createdAt: Date;
   updatedAt: Date;

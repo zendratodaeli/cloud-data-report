@@ -52,6 +52,10 @@ const chartConfig = {
     label: "Net Income",
     color: "#FF0000",
   },
+  netProfit: {
+    label: "Net Profit",
+    color: "#008000",
+  },
 } satisfies ChartConfig;
 
 const StorePerformance: React.FC<StorePerformanceProps> = ({
@@ -112,7 +116,7 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
   const createDateMap = (products: Product[], interval: string) => {
     const map = new Map<
       string,
-      { quantity: number; netIncome: number }
+      { quantity: number; netIncome: number; netProfit: number }
     >();
 
     products.forEach((product) => {
@@ -134,15 +138,17 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
         }
 
         if (!map.has(date)) {
-          map.set(date, { quantity: 0, netIncome: 0 });
+          map.set(date, { quantity: 0, netIncome: 0, netProfit: 0 });
         }
         const existing = map.get(date)!;
         const netIncome =
           soldRecord.income - soldRecord.income * (product.tax / 100);
+        const netProfit = soldRecord.netProfit;
 
         map.set(date, {
           quantity: existing.quantity + soldRecord.totalSoldOut,
           netIncome: existing.netIncome + netIncome,
+          netProfit: existing.netProfit + netProfit,
         });
       });
     });
@@ -160,11 +166,13 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
     const data = dateMap.get(formattedDate) || {
       quantity: 0,
       netIncome: 0,
+      netProfit: 0,
     };
     return {
       date: formattedDate,
       quantity: data.quantity,
       netIncome: data.netIncome,
+      netProfit: data.netProfit,
     };
   });
 
@@ -178,7 +186,7 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
     ? mergedData
     : mergedData.filter((data) => data.date.startsWith(selectedMonth));
 
-  console.log(filteredMergedData, "filtered merged data");
+  const mostRecentNonZeroProfit = filteredMergedData.slice().reverse().find(item => item.netProfit !== 0);
 
   return (
     <div ref={chartRef}>
@@ -193,6 +201,12 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
               Total Net Income:{" "}
               {formatter.format(
                 filteredMergedData.reduce((acc, item) => acc + item.netIncome, 0)
+              )}
+            </div>
+            <div className="text-large font-semibold">
+              Total Net Profit:{" "}
+              {formatter.format(
+                mostRecentNonZeroProfit?.netProfit || 0
               )}
             </div>
             <div className="text-large font-semibold">
@@ -224,8 +238,8 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                   </SelectItem>
                   <SelectItem value="all" className="rounded-lg">
                     <Button variant="link">All time</Button>
-                  </SelectItem>
-                </SelectContent>
+                    </SelectItem>
+                  </SelectContent>
               </Select>
             </div>
             <div>
@@ -303,6 +317,16 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                   <stop offset="5%" stopColor="#FF0000" stopOpacity={0.8} />
                   <stop offset="95%" stopColor="#FF0000" stopOpacity={0.1} />
                 </linearGradient>
+                <linearGradient
+                  id="fillSoldNetProfit"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop offset="5%" stopColor="#008000" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#008000" stopOpacity={0.1} />
+                </linearGradient>
               </defs>
               <CartesianGrid vertical={false} />
               <XAxis
@@ -347,6 +371,9 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                         <p className="intro">{`Net Income: ${formatter.format(
                           payload[0]?.payload?.netIncome || 0
                         )}`}</p>
+                        <p className="intro">{`Net Profit: ${formatter.format(
+                          payload[0]?.payload?.netProfit || 0
+                        )}`}</p>
                       </div>
                     );
                   }
@@ -359,6 +386,13 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                 fill="url(#fillSoldNetIncome)"
                 stroke="#FF0000"
                 name="Net Income"
+              />
+              <Area
+                dataKey="netProfit"
+                type="monotone"
+                fill="url(#fillSoldNetProfit)"
+                stroke="#008000"
+                name="Net Profit"
               />
               <Legend />
             </AreaChart>

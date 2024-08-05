@@ -2,6 +2,36 @@ import prismadb from "@/lib/prismadb";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+async function calculateCumulativeNetProfit(productId: string) {
+  const product = await prismadb.product.findUnique({
+    where: { id: productId },
+    include: { sold: true },
+  });
+
+  let cumulativeSoldOut = 0;
+  let cumulativeNetProfit = 0;
+
+  if(!product) {
+    return null;
+  }
+
+  product.sold.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+  product.sold.forEach(record => {
+    cumulativeSoldOut += record.totalSoldOut;
+    const netProfit = cumulativeSoldOut * product.pricePerPiece - (cumulativeSoldOut * product.pricePerPiece * (product.tax / 100)) - product.capital;
+    record.netProfit = netProfit;
+    cumulativeNetProfit += netProfit;
+  });
+
+  await prismadb.sold.updateMany({
+    where: { productId: productId },
+    data: { netProfit: cumulativeNetProfit },
+  });
+
+  return cumulativeNetProfit;
+}
+
 export async function GET(req: Request, { params }: { params: { soldId: string } }) {
   try {
     if (!params.soldId) {
@@ -33,16 +63,13 @@ export async function GET(req: Request, { params }: { params: { soldId: string }
   }
 }
 
+
 export async function PATCH(req: Request, { params }: { params: { storeId: string, soldId: string } }) {
   try {
     const { userId } = auth();
     const body = await req.json();
 
-    const {
-      productId,
-      totalSoldOut,
-      createdAt
-    } = body;
+    const { productId, totalSoldOut, createdAt } = body;
 
     if (!userId) {
       return new NextResponse("Unauthenticated", { status: 401 });
@@ -93,6 +120,8 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
       },
     });
 
+    await calculateCumulativeNetProfit(productId);
+
     const totalSold = product.sold.reduce((acc, sold) => acc + (sold.id === soldRecord.id ? totalSoldOut : sold.totalSoldOut), 0);
     const remainQuantity = product.quantity - totalSold;
     const grossIncome = totalSold * product.pricePerPiece;
@@ -103,10 +132,9 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
       where: { id: productId },
       data: {
         remainQuantity,
-        grossIncome, // Store gross income
-        income: netIncome, // Store net income
+        grossIncome,
+        income: netIncome,
         profit,
-        // Do not update the tax here as it is static
       },
     });
 
@@ -117,6 +145,9 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
     return new NextResponse("Internal error", { status: 500 });
   }
 }
+
+
+
 
 export async function DELETE(req: Request, { params }: { params: { storeId: string, soldId: string } }) {
   try {

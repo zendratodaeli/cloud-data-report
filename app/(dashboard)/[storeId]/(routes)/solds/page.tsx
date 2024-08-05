@@ -34,6 +34,7 @@ const SoldPage = async ({ params }: { params: { storeId: string } }) => {
     productName: record.product.name,
     totalSoldOut: record.totalSoldOut,
     income: formatter.format(record.income),
+    netProfit: formatter.format(record.netProfit), // Include netProfit in formatted records
     createdAt: format(new Date(record.createdAt), 'MMMM do, yyyy'),
   }));
 

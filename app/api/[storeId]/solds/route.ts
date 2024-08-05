@@ -7,11 +7,7 @@ export async function POST(req: Request, { params }: { params: { storeId: string
     const { userId } = auth();
     const body = await req.json();
 
-    const {
-      productId,
-      totalSoldOut,
-      createdAt
-    } = body;
+    const { productId, totalSoldOut, createdAt } = body;
 
     if (!userId) {
       return new NextResponse("Unauthenticated", { status: 401 });
@@ -45,31 +41,47 @@ export async function POST(req: Request, { params }: { params: { storeId: string
       return new NextResponse("Product not found", { status: 404 });
     }
 
+    const newIncome = totalSoldOut * product.pricePerPiece;
+    const totalSold = product.sold.reduce((acc, sold) => acc + sold.totalSoldOut, 0) + totalSoldOut;
+    const remainQuantity = product.quantity - totalSold;
+    const grossIncome = totalSold * product.pricePerPiece;
+    const grossProfit = grossIncome - product.capital;
+    const netIncome = grossIncome - (grossIncome * (product.tax / 100));
+    const profit = netIncome - product.capital;
+
+    const previousSoldRecords = await prismadb.sold.findMany({
+      where: {
+        productId: productId,
+        createdAt: {
+          lt: createdAt ? new Date(createdAt) : new Date(),
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    const cumulativeSoldOut = previousSoldRecords.reduce((acc, record) => acc + record.totalSoldOut, 0);
+    const netProfit = (totalSoldOut + cumulativeSoldOut) * product.pricePerPiece - ((totalSoldOut + cumulativeSoldOut) * product.pricePerPiece * (product.tax / 100)) - product.capital;
+
     const newSoldRecord = await prismadb.sold.create({
       data: {
         productId,
         totalSoldOut,
-        income: totalSoldOut * product.pricePerPiece,
+        income: newIncome,
+        netProfit: netProfit,
         createdAt: createdAt ? new Date(createdAt) : new Date(),
       },
     });
-
-    const totalSold = product.sold.reduce((acc, sold) => acc + sold.totalSoldOut, 0) + totalSoldOut;
-    const remainQuantity = product.quantity - totalSold;
-    const grossIncome = totalSold * product.pricePerPiece;
-    const grossProfit = grossIncome - product.capital; // Calculate gross profit before tax
-    const netIncome = grossIncome - (grossIncome * (product.tax / 100)); // Calculate net income after tax
-    const profit = netIncome - product.capital; // Calculate profit after tax
 
     await prismadb.product.update({
       where: { id: productId },
       data: {
         remainQuantity,
-        grossIncome, // Store gross income
-        income: netIncome, // Store net income
-        grossProfit, // Store gross profit before tax
-        profit, // Store profit after tax
-        // Do not update the tax here as it is static
+        grossIncome,
+        income: netIncome,
+        grossProfit,
+        profit,
       },
     });
 
@@ -95,7 +107,11 @@ export async function GET(req: Request, { params }: { params: { storeId: string 
       include: {
         products: {
           include: {
-            sold: true,
+            sold: {
+              include: {
+                product: true,  // Ensure we include the product details
+              },
+            },
           },
         },
       },
@@ -107,7 +123,25 @@ export async function GET(req: Request, { params }: { params: { storeId: string 
 
     const soldRecords = storeByUserId.products.flatMap(product => product.sold);
 
-    return NextResponse.json(soldRecords);
+    // Define the type for the cumulative net profit accumulator
+    type CumulativeNetProfit = {
+      [date: string]: number;
+    };
+
+    // Calculate cumulative net profit
+    const cumulativeNetProfit: CumulativeNetProfit = {};
+    let cumulativeSoldOut = 0;
+
+    soldRecords.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+    soldRecords.forEach(record => {
+      const date = new Date(record.createdAt).toISOString().split('T')[0];
+      cumulativeSoldOut += record.totalSoldOut;
+      const netProfit = cumulativeSoldOut * record.product.pricePerPiece - (cumulativeSoldOut * record.product.pricePerPiece * (record.product.tax / 100)) - record.product.capital;
+      cumulativeNetProfit[date] = netProfit;
+    });
+
+    return NextResponse.json({ soldRecords, cumulativeNetProfit });
 
   } catch (error) {
     console.log("[solds_get]", error);
