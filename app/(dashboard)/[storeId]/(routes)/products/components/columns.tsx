@@ -9,10 +9,10 @@ export type ProductColumn = {
   quantity: number;
   remainQuantity: number;
   soldOutQuantity: number;
-  grossIncome: string;  // Add this field
+  grossIncome: string;
   income: string;
   tax: string;
-  grossProfit: string; // Add this field
+  grossProfit: string;
   profit: string;
   category: string;
   createdAt: string;

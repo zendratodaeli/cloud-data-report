@@ -5,6 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 import prismadb from "@/lib/prismadb";
 import React from "react";
 import ProductsClientWrapper from "./components/products-client-wrapper";
+import { Store } from "@/types";
 
 const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
   const { userId } = auth();
@@ -74,11 +75,26 @@ const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
     },
   }));
 
+  const store = await prismadb.store.findFirst({
+    where: {
+      userId: userId
+    },
+  })
+
+  const defaultStore: Store = {
+    id: "default-id",
+    userId: userId,
+    name: "Default Store",
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+
   return (
     <div className="flex-col pt-16">
       <ProductsClientWrapper
         products={transformedProducts}
         formattedProducts={formattedProducts}
+        store={store || defaultStore }
       />
     </div>
   );

@@ -187,7 +187,13 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
     : mergedData.filter((data) => data.date.startsWith(selectedMonth));
 
   const mostRecentNonZeroProfit = filteredMergedData.slice().reverse().find(item => item.netProfit !== 0);
-
+  
+  
+  const totalProductsModal = products.reduce((total, product) => {
+    return total + Number(product.capital);
+  }, 0);
+  
+  
   return (
     <div ref={chartRef}>
       <Card>
@@ -201,12 +207,6 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
               Total Net Income:{" "}
               {formatter.format(
                 filteredMergedData.reduce((acc, item) => acc + item.netIncome, 0)
-              )}
-            </div>
-            <div className="text-large font-semibold">
-              Total Net Profit:{" "}
-              {formatter.format(
-                mostRecentNonZeroProfit?.netProfit || 0
               )}
             </div>
             <div className="text-large font-semibold">

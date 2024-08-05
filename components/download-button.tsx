@@ -16,13 +16,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Product, Store } from "@prisma/client";
 
 interface DownloadButtonProps {
   data: ProductColumn[];
   chartRef: React.RefObject<HTMLDivElement>;
+  store: Store
 }
 
-const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef }) => {
+const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef, store }) => {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -40,7 +42,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef }) => {
   const onExportLocal = async () => {
     const chartImage = await captureChart();
     const workbook = new Workbook();
-    const worksheet = workbook.addWorksheet("Products Data");
+    const worksheet = workbook.addWorksheet(`Products ${store.name}`);
 
     worksheet.columns = [
       { header: "Number", key: "number", width: 10 },
@@ -91,7 +93,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef }) => {
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: "application/octet-stream" });
-    saveAs(blob, "Products_Data.xlsx");
+    saveAs(blob, `${store.name}.xlsx`);
   };
 
 
@@ -142,11 +144,12 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef }) => {
     const printContent = `
       <html>
         <head>
-          <title>Products Data</title>
+          <title>Products Data of ${store.name}</title>
           <style>
             table {
               width: 100%;
               border-collapse: collapse;
+              margin-top: 1rem;
             }
             th, td {
               border: 1px solid black;
@@ -156,10 +159,13 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef }) => {
             th {
               background-color: #f2f2f2;
             }
+            h1{
+              text-align: center;
+            }
           </style>
         </head>
         <body>
-          <h1>Products Data</h1>
+          <h1>${store.name}</h1>
           ${
             chartImage
               ? `<img src="${chartImage}" style="width:100%; height:auto;"/>`
