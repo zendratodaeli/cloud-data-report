@@ -23,7 +23,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang='en'>
         <body className="bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
             <ToasterProvider/>
             <ModalProvider/>
             <LoadingProvider>

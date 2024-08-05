@@ -34,9 +34,9 @@ export async function POST(
       categoryId: product.categoryId,
       pricePerPiece: parseFloat(product.pricePerPiece.replace(/[^0-9.-]+/g, "")), // Convert to float
       capital: parseFloat(product.capital.replace(/[^0-9.-]+/g, "")), // Convert to float
-      quantity: parseInt(product.quantity, 10), // Convert to int
+      quantity: parseInt(product.quantity, 0), // Convert to int
       storeId: params.storeId,
-      remainQuantity: parseInt(product.quantity, 10), // Convert to int
+      remainQuantity: parseInt(product.quantity, 0), // Convert to int
       income: 0,
       grossIncome: 0,
       tax: parseFloat(product.tax.replace(/[^0-9.-]+/g, "")) || 0, // Convert to float, default to 0 if not present

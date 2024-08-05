@@ -116,7 +116,7 @@ export function DataTableCustom<TData extends DataItem, TValue>({
     } else {
       setColumnFilters((old) => old.filter((filter) => filter.id !== dateKey));
     }
-  }, [dateFilter]);
+  }, [dateFilter, dateKey]);
 
   const createMarkup = (htmlContent: string) => {
     return { __html: DOMPurify.sanitize(htmlContent) };
@@ -142,7 +142,6 @@ export function DataTableCustom<TData extends DataItem, TValue>({
             dateNF: "yyyy-mm-dd",
           });
 
-          // Validate and ensure categoryId is present, and convert isSold to boolean
           const parsedJson = json.map((item: any) => {
             if (!item.categoryId) {
               throw new Error(`Missing categoryId for product: ${item.name}`);

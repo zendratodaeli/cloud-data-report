@@ -52,10 +52,6 @@ const chartConfig = {
     label: "Net Income",
     color: "#FF0000",
   },
-  profit: {
-    label: "Net Profit",
-    color: "#00FF00",
-  },
 } satisfies ChartConfig;
 
 const StorePerformance: React.FC<StorePerformanceProps> = ({
@@ -64,6 +60,7 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
 }) => {
   const [timeRange, setTimeRange] = React.useState("7d");
   const [selectedProduct, setSelectedProduct] = React.useState<string>("all");
+  const [selectedMonth, setSelectedMonth] = React.useState<string>("all");
   const { user } = useUser();
   const userId = user?.id;
 
@@ -115,7 +112,7 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
   const createDateMap = (products: Product[], interval: string) => {
     const map = new Map<
       string,
-      { quantity: number; netIncome: number; profit: number }
+      { quantity: number; netIncome: number }
     >();
 
     products.forEach((product) => {
@@ -137,17 +134,15 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
         }
 
         if (!map.has(date)) {
-          map.set(date, { quantity: 0, netIncome: 0, profit: 0 });
+          map.set(date, { quantity: 0, netIncome: 0 });
         }
         const existing = map.get(date)!;
         const netIncome =
           soldRecord.income - soldRecord.income * (product.tax / 100);
-        const profit = product.profit;
 
         map.set(date, {
           quantity: existing.quantity + soldRecord.totalSoldOut,
           netIncome: existing.netIncome + netIncome,
-          profit: existing.profit + profit,
         });
       });
     });
@@ -165,15 +160,25 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
     const data = dateMap.get(formattedDate) || {
       quantity: 0,
       netIncome: 0,
-      profit: 0,
     };
     return {
       date: formattedDate,
       quantity: data.quantity,
       netIncome: data.netIncome,
-      profit: data.profit,
     };
   });
+
+  const months = Array.from(
+    new Set(products.flatMap((product) =>
+      product.sold.map((soldRecord) => format(new Date(soldRecord.createdAt), "yyyy-MM"))
+    ))
+  );
+
+  const filteredMergedData = selectedMonth === "all"
+    ? mergedData
+    : mergedData.filter((data) => data.date.startsWith(selectedMonth));
+
+  console.log(filteredMergedData, "filtered merged data");
 
   return (
     <div ref={chartRef}>
@@ -187,21 +192,15 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
             <div className="text-large font-semibold">
               Total Net Income:{" "}
               {formatter.format(
-                mergedData.reduce((acc, item) => acc + item.netIncome, 0)
+                filteredMergedData.reduce((acc, item) => acc + item.netIncome, 0)
               )}
             </div>
             <div className="text-large font-semibold">
               Total Quantity Sold:{" "}
-              {mergedData.reduce((acc, item) => acc + item.quantity, 0)}
-            </div>
-            <div className="text-large font-semibold">
-              Total Profit:{" "}
-              {formatter.format(
-                mergedData.reduce((acc, item) => acc + item.profit, 0)
-              )}
+              {filteredMergedData.reduce((acc, item) => acc + item.quantity, 0)}
             </div>
           </div>
-          <div className="flex flex-col space-y-5 md:space-y-0 md:flex-row md:space-x-2">
+          <div className="grid grid-cols-2  gap-2">
             <div>
               <Select value={timeRange} onValueChange={setTimeRange}>
                 <SelectTrigger
@@ -258,6 +257,33 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Select
+                value={selectedMonth}
+                onValueChange={setSelectedMonth}
+              >
+                <SelectTrigger
+                  className="w-[160px] rounded-lg sm:ml-auto"
+                  aria-label="Select a month"
+                >
+                  <SelectValue placeholder="Select month" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="all" className="rounded-lg">
+                    <Button variant="link">All Months</Button>
+                  </SelectItem>
+                  {months.map((month) => (
+                    <SelectItem
+                      key={month}
+                      value={month}
+                      className="rounded-lg"
+                    >
+                      <Button variant="link">{month}</Button>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
@@ -265,7 +291,7 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
             config={chartConfig}
             className="aspect-auto h-[250px] w-full"
           >
-            <AreaChart data={mergedData}>
+            <AreaChart data={filteredMergedData}>
               <defs>
                 <linearGradient
                   id="fillSoldNetIncome"
@@ -276,10 +302,6 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                 >
                   <stop offset="5%" stopColor="#FF0000" stopOpacity={0.8} />
                   <stop offset="95%" stopColor="#FF0000" stopOpacity={0.1} />
-                </linearGradient>
-                <linearGradient id="fillSoldProfit" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00FF00" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#00FF00" stopOpacity={0.1} />
                 </linearGradient>
               </defs>
               <CartesianGrid vertical={false} />
@@ -325,9 +347,6 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                         <p className="intro">{`Net Income: ${formatter.format(
                           payload[0]?.payload?.netIncome || 0
                         )}`}</p>
-                        <p className="intro">{`Net Profit: ${formatter.format(
-                          payload[0]?.payload?.profit || 0
-                        )}`}</p>
                       </div>
                     );
                   }
@@ -341,13 +360,6 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                 stroke="#FF0000"
                 name="Net Income"
               />
-              <Area
-                dataKey="profit"
-                type="monotone"
-                fill="url(#fillSoldProfit)"
-                stroke="#00FF00"
-                name="Net Profit"
-              />
               <Legend />
             </AreaChart>
           </ChartContainer>
@@ -355,7 +367,7 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
             config={chartConfig}
             className="aspect-auto h-[250px] w-full mb-6"
           >
-            <AreaChart data={mergedData}>
+            <AreaChart data={filteredMergedData}>
               <defs>
                 <linearGradient
                   id="fillSoldQuantity"
