@@ -40,17 +40,13 @@ const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
     remainQuantity: item.remainQuantity,
     soldOutQuantity: item.quantity - item.remainQuantity,
     grossIncome: formatter.format(item.grossIncome),
-    grossProfit: formatter.format(item.grossProfit),
     income: formatter.format(item.income),
     tax: `${item.tax}%`,
+    grossProfit: formatter.format(item.grossProfit),
     profit: formatter.format(item.profit),
     category: item.category.name,
     createdAt: format(item.createdAt, "MMMM do, yyyy"),
   }));
-
-  const totalNetProfit = products.reduce((total, product) => {
-    return (total + product.profit);
-  }, 0);
 
 
   const transformedProducts = products.map((product) => ({

@@ -2,7 +2,6 @@ import prismadb from "@/lib/prismadb";
 import { auth } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 
-
 export async function GET(req: Request, { params }: {params: {productId: string}}
 ) {
   try {
@@ -94,8 +93,7 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
     const totalSold = existingProduct.sold.reduce((acc, sold) => acc + sold.totalSoldOut, 0);
     const remainQuantity = quantity - totalSold;
     const income = totalSold * pricePerPiece;
-    const profit = income - capital - (income * (tax || existingProduct.tax) / 100); // Ensure tax is used as a percentage
-
+    const profit = income - capital - (income * (tax || existingProduct.tax) / 100);
 
     const product = await prismadb.product.update({
       where: {

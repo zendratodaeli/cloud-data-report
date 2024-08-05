@@ -109,7 +109,7 @@ export async function GET(req: Request, { params }: { params: { storeId: string 
           include: {
             sold: {
               include: {
-                product: true,  // Ensure we include the product details
+                product: true,
               },
             },
           },
@@ -123,12 +123,10 @@ export async function GET(req: Request, { params }: { params: { storeId: string 
 
     const soldRecords = storeByUserId.products.flatMap(product => product.sold);
 
-    // Define the type for the cumulative net profit accumulator
     type CumulativeNetProfit = {
       [date: string]: number;
     };
 
-    // Calculate cumulative net profit
     const cumulativeNetProfit: CumulativeNetProfit = {};
     let cumulativeSoldOut = 0;
 

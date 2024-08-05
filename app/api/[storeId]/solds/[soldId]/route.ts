@@ -125,7 +125,7 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
     const totalSold = product.sold.reduce((acc, sold) => acc + (sold.id === soldRecord.id ? totalSoldOut : sold.totalSoldOut), 0);
     const remainQuantity = product.quantity - totalSold;
     const grossIncome = totalSold * product.pricePerPiece;
-    const netIncome = grossIncome - (grossIncome * (product.tax / 100)); // Calculate net income after tax
+    const netIncome = grossIncome - (grossIncome * (product.tax / 100));
     const profit = netIncome - product.capital;
 
     await prismadb.product.update({
@@ -145,9 +145,6 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
     return new NextResponse("Internal error", { status: 500 });
   }
 }
-
-
-
 
 export async function DELETE(req: Request, { params }: { params: { storeId: string, soldId: string } }) {
   try {
@@ -192,17 +189,16 @@ export async function DELETE(req: Request, { params }: { params: { storeId: stri
     const totalSold = product.sold.reduce((acc, sold) => acc + (sold.id !== soldRecord.id ? sold.totalSoldOut : 0), 0);
     const remainQuantity = product.quantity - totalSold;
     const grossIncome = totalSold * product.pricePerPiece;
-    const netIncome = grossIncome - (grossIncome * (product.tax / 100)); // Calculate net income after tax
+    const netIncome = grossIncome - (grossIncome * (product.tax / 100));
     const profit = netIncome - product.capital;
 
-    await prismadb.product.update({
+    const productUpdate = await prismadb.product.update({
       where: { id: soldRecord.productId },
       data: {
         remainQuantity,
-        grossIncome, // Store gross income
-        income: netIncome, // Store net income
+        grossIncome,
+        income: netIncome,
         profit,
-        // Do not update the tax here as it is static
       },
     });
 

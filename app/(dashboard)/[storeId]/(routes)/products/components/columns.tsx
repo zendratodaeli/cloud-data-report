@@ -41,7 +41,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
     header: "In Stock",
   },
   {
-    accessorKey: "soldOutQuantity",  // Add this column
+    accessorKey: "soldOutQuantity",
     header: "Sold Out Quantity",
   },
   {
@@ -49,12 +49,12 @@ export const columns: ColumnDef<ProductColumn>[] = [
     header: "Tax",
   },
   {
-    accessorKey: "grossIncome",  // Add this column
+    accessorKey: "grossIncome",
     header: "Gross Income (Before Tax)",
   },
   {
     accessorKey: "grossProfit",
-    header: "Gross Profit (Before Tax)", // Add this column
+    header: "Gross Profit (Before Tax)",
   },
   {
     accessorKey: "income",
