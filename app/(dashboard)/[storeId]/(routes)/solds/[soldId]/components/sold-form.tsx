@@ -33,9 +33,9 @@ import {
 } from "@/components/ui/select";
 
 const formSchema = z.object({
-  productId: z.string().min(1),
-  totalSoldOut: z.coerce.number().min(1),
-  categoryId: z.string().min(1),
+  productId: z.string().min(1, "Product is required"),
+  totalSoldOut: z.coerce.number().min(1, "Must be at least 1"),
+  categoryId: z.string().min(1, "Category is required"),
   createdAt: z.string().optional(),
 });
 
@@ -60,6 +60,10 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products, categories }
   const [originalTotalSoldOut, setOriginalTotalSoldOut] = useState<number>(
     initialData ? initialData.totalSoldOut : 0
   );
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    initialData ? initialData.categoryId : ""
+  );
+  const [productCreatedAt, setProductCreatedAt] = useState<string>("");
 
   const params = useParams();
   const router = useRouter();
@@ -93,23 +97,44 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products, categories }
   });
 
   useEffect(() => {
-    const subscription = form.watch((value) => {
-      const selectedProduct = products.find(
-        (product) => product.id === value.productId
-      );
-      setRemainQuantity(
-        selectedProduct ? selectedProduct.remainQuantity : null
-      );
+    const subscription = form.watch((value, { name }) => {
+      if (name === "productId") {
+        const selectedProduct = products.find(
+          (product) => product.id === value.productId
+        );
+        setRemainQuantity(
+          selectedProduct ? selectedProduct.remainQuantity : null
+        );
+        setSelectedCategory(
+          selectedProduct ? selectedProduct.categoryId : ""
+        );
+        const productDate = selectedProduct ? format(new Date(selectedProduct.createdAt), "yyyy-MM-dd") : "";
+        setProductCreatedAt(productDate || "");
+        form.setValue("categoryId", selectedProduct ? selectedProduct.categoryId : "", { shouldValidate: true });
+        form.setValue("createdAt", productDate || todayDate, { shouldValidate: true });
+      }
     });
     return () => subscription.unsubscribe();
-  }, [form, form.watch, products]);
+  }, [form, products]);
 
   const onSubmit = async (data: SoldFormValues) => {
     const quantityDifference = data.totalSoldOut - originalTotalSoldOut;
+    const selectedProduct = products.find(
+      (product) => product.id === data.productId
+    );
 
     if (remainQuantity !== null && quantityDifference > remainQuantity) {
       toast.error(`Cannot sell more than ${remainQuantity} additional items`);
       return;
+    }
+
+    if (selectedProduct) {
+      const selectedDate = new Date(data.createdAt!);
+      const productDate = new Date(selectedProduct.createdAt);
+      if (selectedDate < productDate) {
+        toast.error(`The selected date cannot be before the product creation date (${productDate.toISOString().split('T')[0]})`);
+        return;
+      }
     }
 
     try {
@@ -195,6 +220,13 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products, categories }
                       setRemainQuantity(
                         selectedProduct ? selectedProduct.remainQuantity : null
                       );
+                      setSelectedCategory(
+                        selectedProduct ? selectedProduct.categoryId : ""
+                      );
+                      const productDate = selectedProduct ? format(new Date(selectedProduct.createdAt), "yyyy-MM-dd") : "";
+                      setProductCreatedAt(productDate || "");
+                      form.setValue("categoryId", selectedProduct ? selectedProduct.categoryId : "", { shouldValidate: true });
+                      form.setValue("createdAt", productDate || todayDate, { shouldValidate: true });
                     }}
                     value={field.value}
                     defaultValue={field.value}
@@ -286,7 +318,12 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products, categories }
                 <FormItem>
                   <FormLabel>Date</FormLabel>
                   <FormControl>
-                    <Input type="date" disabled={loading} {...field} />
+                    <Input 
+                      type="date" 
+                      disabled={loading} 
+                      {...field} 
+                      min={productCreatedAt} // Ensure the date is not before product creation date
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -36,7 +36,7 @@ const SoldPage = async ({
     }
   });
 
-  console.log(products.map(p => p.category))
+  console.log(products.map(p => p))
   const categories = await prismadb.category.findMany({
     where: {
       storeId: params.storeId,
