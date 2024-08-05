@@ -1,7 +1,7 @@
 import prismadb from '@/lib/prismadb';
 import React from 'react';
 import { auth } from '@clerk/nextjs/server';
-import SoldForm from './components/product-form';
+import SoldForm from './components/sold-form';
 
 const SoldPage = async ({
   params
@@ -20,6 +20,7 @@ const SoldPage = async ({
     },
     include: {
       product: true,
+      category: true
     }
   });
 
@@ -28,9 +29,22 @@ const SoldPage = async ({
       storeId: params.storeId,
       store: {
         userId: userId
-      }
+      }, 
+    },
+    include: {
+      category: true
     }
   });
+
+  console.log(products.map(p => p.category))
+  const categories = await prismadb.category.findMany({
+    where: {
+      storeId: params.storeId,
+      store: {
+        userId: userId
+      },
+    }
+  })
 
   return (
     <div className='flex-col'>
@@ -38,6 +52,7 @@ const SoldPage = async ({
         <SoldForm 
           products={products} 
           initialData={soldRecord}
+          categories={categories}
         />
       </div>
     </div>

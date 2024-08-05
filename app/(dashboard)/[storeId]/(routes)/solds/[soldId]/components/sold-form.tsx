@@ -1,72 +1,108 @@
 "use client";
 
 import * as z from "zod";
-import { format } from 'date-fns';
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { Product } from "@prisma/client";
+import { Category, Product } from "@prisma/client";
 import { Trash } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { AlertModal } from "@/components/modals/alert-modal";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z.object({
   productId: z.string().min(1),
   totalSoldOut: z.coerce.number().min(1),
+  categoryId: z.string().min(1),
   createdAt: z.string().optional(),
 });
 
 type SoldFormValues = z.infer<typeof formSchema>;
 
 interface SoldFormProps {
-  initialData: { id: string; productId: string; totalSoldOut: number; createdAt: Date } | null;
+  initialData: {
+    id: string;
+    productId: string;
+    totalSoldOut: number;
+    categoryId: string;
+    createdAt: Date;
+  } | null;
   products: Product[];
+  categories: Category[];
 }
 
-const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
+const SoldForm: React.FC<SoldFormProps> = ({ initialData, products, categories }) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [remainQuantity, setRemainQuantity] = useState<number | null>(null);
-  const [originalTotalSoldOut, setOriginalTotalSoldOut] = useState<number>(initialData ? initialData.totalSoldOut : 0);
+  const [originalTotalSoldOut, setOriginalTotalSoldOut] = useState<number>(
+    initialData ? initialData.totalSoldOut : 0
+  );
 
   const params = useParams();
   const router = useRouter();
 
   const title = initialData ? "Edit a Sold Record" : "Create a Sold Record";
-  const description = initialData ? "Edit a Sold Record" : "Add a new Sold Record";
-  const toastMessage = initialData ? "Sold Record Updated" : "Sold Record created.";
+  const description = initialData
+    ? "Edit a Sold Record"
+    : "Add a new Sold Record";
+  const toastMessage = initialData
+    ? "Sold Record Updated"
+    : "Sold Record created.";
   const action = initialData ? "Save changes" : "Create";
 
-  const todayDate = format(new Date(), 'yyyy-MM-dd');
+  const todayDate = format(new Date(), "yyyy-MM-dd");
 
   const form = useForm<SoldFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData ? { 
-      productId: initialData.productId,
-      totalSoldOut: initialData.totalSoldOut,
-      createdAt: format(new Date(initialData.createdAt), 'yyyy-MM-dd'),
-    } : {
-      productId: '',
-      totalSoldOut: 1,
-      createdAt: todayDate,
-    },
+    defaultValues: initialData
+      ? {
+          productId: initialData.productId,
+          categoryId: initialData.categoryId,
+          totalSoldOut: initialData.totalSoldOut,
+          createdAt: format(new Date(initialData.createdAt), "yyyy-MM-dd"),
+        }
+      : {
+          productId: "",
+          categoryId: "",
+          totalSoldOut: 1,
+          createdAt: todayDate,
+        },
   });
 
   useEffect(() => {
     const subscription = form.watch((value) => {
-      const selectedProduct = products.find(product => product.id === value.productId);
-      setRemainQuantity(selectedProduct ? selectedProduct.remainQuantity : null);
+      const selectedProduct = products.find(
+        (product) => product.id === value.productId
+      );
+      setRemainQuantity(
+        selectedProduct ? selectedProduct.remainQuantity : null
+      );
     });
     return () => subscription.unsubscribe();
-  }, [form.watch, products]);
+  }, [form, form.watch, products]);
 
   const onSubmit = async (data: SoldFormValues) => {
     const quantityDifference = data.totalSoldOut - originalTotalSoldOut;
@@ -80,7 +116,10 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
       setLoading(true);
 
       if (initialData) {
-        await axios.patch(`/api/${params.storeId}/solds/${initialData.id}`, data);
+        await axios.patch(
+          `/api/${params.storeId}/solds/${initialData.id}`,
+          data
+        );
       } else {
         await axios.post(`/api/${params.storeId}/solds`, data);
       }
@@ -93,7 +132,7 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   const onDelete = async () => {
     try {
@@ -110,7 +149,7 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
       setLoading(false);
       setOpen(false);
     }
-  }
+  };
 
   return (
     <>
@@ -121,10 +160,7 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
         loading={loading}
       />
       <div className="flex items-center justify-between pt-16">
-        <Heading 
-          title={title}
-          description={description}
-        />
+        <Heading title={title} description={description} />
         {initialData && (
           <Button
             disabled={loading}
@@ -132,13 +168,13 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
             size="sm"
             onClick={() => setOpen(true)}
           >
-            <Trash className="h-4 w-4"/>
+            <Trash className="h-4 w-4" />
           </Button>
         )}
       </div>
-      <Separator/>
+      <Separator />
       <Form {...form}>
-        <form 
+        <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-8 w-full"
         >
@@ -149,19 +185,23 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Product</FormLabel>
-                  <Select 
-                    disabled={loading} 
-                    onValueChange={value => {
+                  <Select
+                    disabled={loading}
+                    onValueChange={(value) => {
                       field.onChange(value);
-                      const selectedProduct = products.find(product => product.id === value);
-                      setRemainQuantity(selectedProduct ? selectedProduct.remainQuantity : null);
+                      const selectedProduct = products.find(
+                        (product) => product.id === value
+                      );
+                      setRemainQuantity(
+                        selectedProduct ? selectedProduct.remainQuantity : null
+                      );
                     }}
-                    value={field.value} 
+                    value={field.value}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue 
+                        <SelectValue
                           defaultValue={field.value}
                           placeholder="Select a product"
                         />
@@ -169,16 +209,45 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
                     </FormControl>
                     <SelectContent>
                       {products.map((product) => (
-                        <SelectItem
-                          key={product.id}
-                          value={product.id}
-                        >
+                        <SelectItem key={product.id} value={product.id}>
                           {product.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage/>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select
+                    disabled={loading}
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue
+                          defaultValue={field.value}
+                          placeholder="Select a category"
+                        />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -189,12 +258,16 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
                 <FormItem>
                   <FormLabel>Total Sold Out</FormLabel>
                   <FormControl>
-                    <Input 
+                    <Input
                       type="number"
                       disabled={loading}
                       placeholder="Number of items sold"
                       {...field}
-                      max={remainQuantity !== null ? remainQuantity + originalTotalSoldOut : undefined}
+                      max={
+                        remainQuantity !== null
+                          ? remainQuantity + originalTotalSoldOut
+                          : undefined
+                      }
                     />
                   </FormControl>
                   {remainQuantity !== null && (
@@ -202,7 +275,7 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
                       Max available: {remainQuantity + originalTotalSoldOut}
                     </FormDescription>
                   )}
-                  <FormMessage/>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -213,13 +286,9 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
                 <FormItem>
                   <FormLabel>Date</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="date"
-                      disabled={loading}
-                      {...field}
-                    />
+                    <Input type="date" disabled={loading} {...field} />
                   </FormControl>
-                  <FormMessage/>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -231,6 +300,6 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products }) => {
       </Form>
     </>
   );
-}
+};
 
 export default SoldForm;

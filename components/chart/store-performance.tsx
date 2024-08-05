@@ -64,17 +64,21 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
 }) => {
   const [timeRange, setTimeRange] = React.useState("7d");
   const [selectedProduct, setSelectedProduct] = React.useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
   const [selectedMonth, setSelectedMonth] = React.useState<string>("all");
   const { user } = useUser();
   const userId = user?.id;
 
+  console.log(products, "products");
+
   const storeName = products.map((s) => s.store.name);
   const firstStoreName = storeName[0];
 
-  const filteredProducts =
-    selectedProduct === "all"
-      ? products
-      : products.filter((product) => product.name === selectedProduct);
+  const filteredProducts = products.filter(
+    (product) =>
+      (selectedProduct === "all" || product.name === selectedProduct) &&
+      (selectedCategory === "all" || product.category.name === selectedCategory)
+  );
 
   const now = new Date();
   let pastDate: Date;
@@ -177,23 +181,29 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
   });
 
   const months = Array.from(
-    new Set(products.flatMap((product) =>
-      product.sold.map((soldRecord) => format(new Date(soldRecord.createdAt), "yyyy-MM"))
-    ))
+    new Set(
+      products.flatMap((product) =>
+        product.sold.map((soldRecord) =>
+          format(new Date(soldRecord.createdAt), "yyyy-MM")
+        )
+      )
+    )
   );
 
-  const filteredMergedData = selectedMonth === "all"
-    ? mergedData
-    : mergedData.filter((data) => data.date.startsWith(selectedMonth));
+  const filteredMergedData =
+    selectedMonth === "all"
+      ? mergedData
+      : mergedData.filter((data) => data.date.startsWith(selectedMonth));
 
-  const mostRecentNonZeroProfit = filteredMergedData.slice().reverse().find(item => item.netProfit !== 0);
-  
-  
+  const mostRecentNonZeroProfit = filteredMergedData
+    .slice()
+    .reverse()
+    .find((item) => item.netProfit !== 0);
+
   const totalProductsModal = products.reduce((total, product) => {
     return total + Number(product.capital);
   }, 0);
-  
-  
+
   return (
     <div ref={chartRef}>
       <Card>
@@ -206,7 +216,10 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
             <div className="text-large font-semibold">
               Total Net Income:{" "}
               {formatter.format(
-                filteredMergedData.reduce((acc, item) => acc + item.netIncome, 0)
+                filteredMergedData.reduce(
+                  (acc, item) => acc + item.netIncome,
+                  0
+                )
               )}
             </div>
             <div className="text-large font-semibold">
@@ -214,7 +227,7 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
               {filteredMergedData.reduce((acc, item) => acc + item.quantity, 0)}
             </div>
           </div>
-          <div className="grid grid-cols-2  gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <div>
               <Select value={timeRange} onValueChange={setTimeRange}>
                 <SelectTrigger
@@ -238,8 +251,8 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                   </SelectItem>
                   <SelectItem value="all" className="rounded-lg">
                     <Button variant="link">All time</Button>
-                    </SelectItem>
-                  </SelectContent>
+                  </SelectItem>
+                </SelectContent>
               </Select>
             </div>
             <div>
@@ -272,10 +285,33 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
               </Select>
             </div>
             <div>
-              <Select
-                value={selectedMonth}
-                onValueChange={setSelectedMonth}
-              >
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger
+                  className="w-[160px] rounded-lg sm:ml-auto"
+                  aria-label="Select a category"
+                >
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="all" className="rounded-lg">
+                    <Button variant="link">All Categories</Button>
+                  </SelectItem>
+                  {Array.from(
+                    new Set(products.map((product) => product.category.name))
+                  ).map((categoryName) => (
+                    <SelectItem
+                      key={categoryName}
+                      value={categoryName}
+                      className="rounded-lg"
+                    >
+                      <Button variant="link">{categoryName}</Button>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                 <SelectTrigger
                   className="w-[160px] rounded-lg sm:ml-auto"
                   aria-label="Select a month"
@@ -287,11 +323,7 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                     <Button variant="link">All Months</Button>
                   </SelectItem>
                   {months.map((month) => (
-                    <SelectItem
-                      key={month}
-                      value={month}
-                      className="rounded-lg"
-                    >
+                    <SelectItem key={month} value={month} className="rounded-lg">
                       <Button variant="link">{month}</Button>
                     </SelectItem>
                   ))}

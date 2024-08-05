@@ -59,8 +59,6 @@ export async function POST(req: Request, { params }: { params: { storeId: string
     if (!storeByUserId) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
-    
-    const initialCapital = 0 - capital
 
     const product = await prismadb.product.create({
       data: {
@@ -72,8 +70,8 @@ export async function POST(req: Request, { params }: { params: { storeId: string
         income: 0,
         grossIncome: 0,
         tax: tax || 0,
-        grossProfit: initialCapital,
-        profit: initialCapital,
+        grossProfit: 0,
+        profit: 0,
         soldOutQuantity: 0,
         categoryId,
         createdAt: createdAt ? new Date(createdAt) : new Date(),

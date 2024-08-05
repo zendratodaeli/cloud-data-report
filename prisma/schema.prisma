@@ -34,6 +34,7 @@ model Category {
   storeId   String
   store     Store     @relation("StoreToCategory", fields: [storeId], references: [id])
   products  Product[] @relation("CategoryToProduct")
+  solds     Sold[]    @relation("CategoryToSold")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
@@ -46,7 +47,7 @@ model Product {
   store           Store    @relation("StoreToProduct", fields: [storeId], references: [id])
   categoryId      String
   category        Category @relation("CategoryToProduct", fields: [categoryId], references: [id])
-  name            String   
+  name            String
   capital         Int
   pricePerPiece   Int
   quantity        Int
@@ -69,6 +70,8 @@ model Sold {
   id           String   @id @default(uuid())
   productId    String
   product      Product  @relation("ProductToSold", fields: [productId], references: [id])
+  categoryId   String
+  category     Category @relation("CategoryToSold", fields: [categoryId], references: [id])
   totalSoldOut Int
   income       Int
   netProfit    Int

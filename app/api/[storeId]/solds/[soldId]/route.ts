@@ -11,7 +11,7 @@ async function calculateCumulativeNetProfit(productId: string) {
   let cumulativeSoldOut = 0;
   let cumulativeNetProfit = 0;
 
-  if(!product) {
+  if (!product) {
     return null;
   }
 
@@ -63,13 +63,12 @@ export async function GET(req: Request, { params }: { params: { soldId: string }
   }
 }
 
-
 export async function PATCH(req: Request, { params }: { params: { storeId: string, soldId: string } }) {
   try {
     const { userId } = auth();
     const body = await req.json();
 
-    const { productId, totalSoldOut, createdAt } = body;
+    const { productId, totalSoldOut, categoryId, createdAt } = body;
 
     if (!userId) {
       return new NextResponse("Unauthenticated", { status: 401 });
@@ -77,6 +76,10 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
 
     if (!productId) {
       return new NextResponse("Product Id is required", { status: 400 });
+    }
+
+    if (!categoryId) {
+      return new NextResponse("Category Id is required", { status: 400 });
     }
 
     if (!totalSoldOut) {
@@ -116,6 +119,7 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
       data: {
         totalSoldOut,
         income: totalSoldOut * product.pricePerPiece,
+        categoryId,
         createdAt: createdAt ? new Date(createdAt) : new Date(),
       },
     });
@@ -186,22 +190,30 @@ export async function DELETE(req: Request, { params }: { params: { storeId: stri
       where: { id: params.soldId },
     });
 
-    const totalSold = product.sold.reduce((acc, sold) => acc + (sold.id !== soldRecord.id ? sold.totalSoldOut : 0), 0);
-    const remainQuantity = product.quantity - totalSold;
+    // Recalculate product financial details after deletion
+    const remainingSoldRecords = await prismadb.sold.findMany({
+      where: { productId: product.id },
+    });
+
+    const totalSold = remainingSoldRecords.reduce((acc, sold) => acc + sold.totalSoldOut, 0);
     const grossIncome = totalSold * product.pricePerPiece;
     const netIncome = grossIncome - (grossIncome * (product.tax / 100));
-    const profit = netIncome - product.capital;
+    const profit = netIncome;
+    const grossProfit = grossIncome;
 
-    const productUpdate = await prismadb.product.update({
-      where: { id: soldRecord.productId },
+
+    const updateProduct = await prismadb.product.update({
+      where: { id: product.id },
       data: {
-        remainQuantity,
+        remainQuantity: product.quantity - totalSold,
         grossIncome,
         income: netIncome,
         profit,
+        grossProfit
       },
     });
 
+    console.log(updateProduct)
     return new NextResponse("Sold record deleted successfully");
 
   } catch (error) {
@@ -209,5 +221,3 @@ export async function DELETE(req: Request, { params }: { params: { storeId: stri
     return new NextResponse("Internal error", { status: 500 });
   }
 }
-
-

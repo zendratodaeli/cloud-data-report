@@ -24,7 +24,7 @@ const formSchema = z.object({
   capital: z.coerce.number().min(0),
   quantity: z.coerce.number().min(1),
   categoryId: z.string().min(1),
-  tax: z.coerce.number().min(0).max(100),  // Add tax field with validation
+  tax: z.coerce.number().min(0).max(100),
   createdAt: z.string().optional(),
 });
 
@@ -47,7 +47,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, categories }) =>
   const toastMessage = initialData ? "Product Updated" : "Product created.";
   const action = initialData ? "Save changes" : "Create";
 
-  const todayDate = format(new Date(), 'yyyy-MM-dd'); // Ensure today's date is correctly formatted
+  const todayDate = format(new Date(), 'yyyy-MM-dd');
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
@@ -56,16 +56,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, categories }) =>
       pricePerPiece: parseFloat(String(initialData?.pricePerPiece)),
       capital: parseFloat(String(initialData?.capital)),
       quantity: parseInt(String(initialData?.quantity)),
-      tax: parseFloat(String(initialData?.tax)),  // Add tax default value
-      createdAt: format(new Date(initialData.createdAt), 'yyyy-MM-dd'), // Ensure the date is correctly formatted
+      tax: parseFloat(String(initialData?.tax)),
+      createdAt: format(new Date(initialData.createdAt), 'yyyy-MM-dd'),
     } : {
       name: '',
       pricePerPiece: 0,
       capital: 0,
       quantity: 1,
       categoryId: '',
-      tax: 0,  // Add default tax value
-      createdAt: todayDate, // Use today's date as the default value
+      tax: 0,
+      createdAt: todayDate,
     },
   });
 

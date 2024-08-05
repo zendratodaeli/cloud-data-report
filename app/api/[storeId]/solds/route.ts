@@ -7,7 +7,7 @@ export async function POST(req: Request, { params }: { params: { storeId: string
     const { userId } = auth();
     const body = await req.json();
 
-    const { productId, totalSoldOut, createdAt } = body;
+    const { productId, totalSoldOut, categoryId, createdAt } = body;
 
     if (!userId) {
       return new NextResponse("Unauthenticated", { status: 401 });
@@ -15,6 +15,10 @@ export async function POST(req: Request, { params }: { params: { storeId: string
 
     if (!productId) {
       return new NextResponse("Product Id is required", { status: 400 });
+    }
+
+    if (!categoryId) {
+      return new NextResponse("Category Id is required", { status: 400 });
     }
 
     if (!totalSoldOut) {
@@ -70,6 +74,7 @@ export async function POST(req: Request, { params }: { params: { storeId: string
         totalSoldOut,
         income: newIncome,
         netProfit: netProfit,
+        categoryId,
         createdAt: createdAt ? new Date(createdAt) : new Date(),
       },
     });

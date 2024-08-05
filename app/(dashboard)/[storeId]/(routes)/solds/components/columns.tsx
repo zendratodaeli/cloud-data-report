@@ -7,6 +7,7 @@ export type SoldColumn = {
   totalSoldOut: number;
   income: string;
   netProfit: string;
+  category: string;
   createdAt: string;
 };
 
@@ -27,6 +28,10 @@ export const columns: ColumnDef<SoldColumn>[] = [
   {
     accessorKey: "netProfit",
     header: "Net Profit",
+  },
+  {
+    accessorKey: "category",
+    header: "Category",
   },
   {
     accessorKey: "createdAt",
