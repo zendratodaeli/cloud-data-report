@@ -28,6 +28,7 @@ export async function POST(
     if (!storeByUserId) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
+    
 
     const products = body.map((product: any) => ({
       name: product.name,
@@ -46,6 +47,20 @@ export async function POST(
       createdAt: product.createdAt ? new Date(product.createdAt) : new Date(),
     }));
 
+    for (const product of products) {
+      const duplicateCheck = await prismadb.product.findFirst({
+        where: {
+          name: product.name,
+          categoryId: product.categoryId,
+          createdAt: product.createdAt,
+          storeId: params.storeId,
+        },
+      });
+
+      if (duplicateCheck) {
+        return new NextResponse(`A product with the name "${product.name}", category, and date already exists.`, { status: 400 });
+      }
+    }
     const product = await prismadb.product.createMany({
       data: products,
     });

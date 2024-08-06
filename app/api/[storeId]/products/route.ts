@@ -60,6 +60,20 @@ export async function POST(req: Request, { params }: { params: { storeId: string
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
+    // Check for duplicate entry
+    const duplicateCheck = await prismadb.product.findFirst({
+      where: {
+        name,
+        categoryId,
+        createdAt: new Date(createdAt),
+        storeId: params.storeId
+      },
+    });
+
+    if (duplicateCheck) {
+      return new NextResponse("A product with the same name, category, and date already exists.", { status: 400 });
+    }
+
     const product = await prismadb.product.create({
       data: {
         name,
@@ -86,6 +100,7 @@ export async function POST(req: Request, { params }: { params: { storeId: string
     return new NextResponse("Internal error", { status: 500 });
   }
 }
+
 
 export async function GET(req: Request, { params }: { params: { storeId: string } }) {
   try {

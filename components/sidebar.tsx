@@ -7,12 +7,9 @@ import { cn } from "@/lib/utils";
 import {
   FileInput,
   FileType,
-  History,
   LayoutDashboard,
   Notebook,
   Settings,
-  SquareLibrary,
-  Tag,
 } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 import { Separator } from "./ui/separator";
@@ -28,12 +25,6 @@ const SideBar = () => {
   const params = useParams();
 
   const routes = [
-    {
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      href: `/${params.storeId}`,
-      color: "text-black",
-    },
     {
       label: "Categories",
       icon: FileType,

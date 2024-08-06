@@ -167,7 +167,7 @@ export function DataTableCustom<TData extends DataItem, TValue>({
             router.refresh();
           } catch (error) {
             console.error("Error uploading data:", error);
-            toast.error("Error uploading data");
+            toast.error("Something went wrong. It is forbidden to duplicate the entry date for the same product & category. Choose other dates.");
           } finally {
             setLoading(false);
           }

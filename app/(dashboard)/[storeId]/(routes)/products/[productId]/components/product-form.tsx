@@ -72,22 +72,27 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, categories }) =>
   const onSubmit = async (data: ProductFormValues) => {
     try {
       setLoading(true);
-
-      if(initialData) {
-        await axios.patch(`/api/${params.storeId}/products/${params.productId}`, data);
-      } else {
-        await axios.post(`/api/${params.storeId}/products`, data);
+  
+      const response = initialData
+        ? await axios.patch(`/api/${params.storeId}/products/${params.productId}`, data)
+        : await axios.post(`/api/${params.storeId}/products`, data);
+  
+      if (response.status === 400) {
+        toast.error(response.data);
+        setLoading(false);
+        return;
       }
-
+  
       router.push(`/${params.storeId}/products`);
       router.refresh();
       toast.success(toastMessage);
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error("Something went wrong. It is forbidden to duplicate the entry date for the same product & category. Choose other dates.");
     } finally {
       setLoading(false);
     }
   }
+  
 
   const onDelete = async () => {
     try {

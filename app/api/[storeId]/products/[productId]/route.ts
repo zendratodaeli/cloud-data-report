@@ -90,10 +90,27 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
       return new NextResponse("Product not found", { status: 404 });
     }
 
+    // Check for duplicate entry excluding the current product
+    const duplicateCheck = await prismadb.product.findFirst({
+      where: {
+        name,
+        categoryId,
+        createdAt: new Date(createdAt),
+        storeId: params.storeId,
+        NOT: {
+          id: params.productId,
+        },
+      },
+    });
+
+    if (duplicateCheck) {
+      return new NextResponse("A product with the same name, category, and date already exists.", { status: 400 });
+    }
+
     const totalSold = existingProduct.sold.reduce((acc, sold) => acc + sold.totalSoldOut, 0);
     const remainQuantity = quantity - totalSold;
     const income = totalSold * pricePerPiece;
-    const profit = income - capital - (income * (tax || existingProduct.tax) / 100);
+    const profit = income - capital - (income * (tax || existingProduct.tax) / 100) > 0 ? income - capital - (income * (tax || existingProduct.tax) / 100) : 0 ;
 
     const product = await prismadb.product.update({
       where: {
@@ -119,6 +136,7 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
+
 
 export async function DELETE(req: Request, { params }: {params: {storeId: string, productId: string}}
 ) {
