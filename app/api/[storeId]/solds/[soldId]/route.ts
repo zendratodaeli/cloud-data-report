@@ -114,6 +114,23 @@ export async function PATCH(req: Request, { params }: { params: { storeId: strin
       return new NextResponse("Product not found", { status: 404 });
     }
 
+    // Check for duplicate entry excluding the current record
+    const duplicateCheck = await prismadb.sold.findFirst({
+      where: {
+        productId,
+        categoryId,
+        createdAt: new Date(createdAt),
+        NOT: {
+          id: params.soldId,
+        },
+      },
+    });
+
+    if (duplicateCheck) {
+      return new NextResponse("A record already exists for the selected product, category, and date.", { status: 400 });
+    }
+
+
     const updatedSoldRecord = await prismadb.sold.update({
       where: { id: params.soldId },
       data: {

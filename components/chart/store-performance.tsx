@@ -285,7 +285,10 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
               </Select>
             </div>
             <div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select
+                value={selectedCategory}
+                onValueChange={setSelectedCategory}
+              >
                 <SelectTrigger
                   className="w-[160px] rounded-lg sm:ml-auto"
                   aria-label="Select a category"
@@ -323,7 +326,11 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                     <Button variant="link">All Months</Button>
                   </SelectItem>
                   {months.map((month) => (
-                    <SelectItem key={month} value={month} className="rounded-lg">
+                    <SelectItem
+                      key={month}
+                      value={month}
+                      className="rounded-lg"
+                    >
                       <Button variant="link">{month}</Button>
                     </SelectItem>
                   ))}

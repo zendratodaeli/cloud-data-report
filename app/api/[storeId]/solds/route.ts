@@ -45,6 +45,19 @@ export async function POST(req: Request, { params }: { params: { storeId: string
       return new NextResponse("Product not found", { status: 404 });
     }
 
+    // Check for duplicate entry
+    const duplicateCheck = await prismadb.sold.findFirst({
+      where: {
+        productId,
+        categoryId,
+        createdAt: new Date(createdAt),
+      },
+    });
+
+    if (duplicateCheck) {
+      return new NextResponse("A record already exists for the selected product, category, and date.", { status: 400 });
+    }
+
     const newIncome = totalSoldOut * product.pricePerPiece;
     const totalSold = product.sold.reduce((acc, sold) => acc + sold.totalSoldOut, 0) + totalSoldOut;
     const remainQuantity = product.quantity - totalSold;
@@ -97,6 +110,7 @@ export async function POST(req: Request, { params }: { params: { storeId: string
     return new NextResponse("Internal error", { status: 500 });
   }
 }
+
 
 
 export async function GET(req: Request, { params }: { params: { storeId: string } }) {

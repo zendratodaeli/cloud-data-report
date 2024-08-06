@@ -53,7 +53,11 @@ interface SoldFormProps {
   categories: Category[];
 }
 
-const SoldForm: React.FC<SoldFormProps> = ({ initialData, products, categories }) => {
+const SoldForm: React.FC<SoldFormProps> = ({
+  initialData,
+  products,
+  categories,
+}) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [remainQuantity, setRemainQuantity] = useState<number | null>(null);
@@ -105,13 +109,19 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products, categories }
         setRemainQuantity(
           selectedProduct ? selectedProduct.remainQuantity : null
         );
-        setSelectedCategory(
-          selectedProduct ? selectedProduct.categoryId : ""
-        );
-        const productDate = selectedProduct ? format(new Date(selectedProduct.createdAt), "yyyy-MM-dd") : "";
+        setSelectedCategory(selectedProduct ? selectedProduct.categoryId : "");
+        const productDate = selectedProduct
+          ? format(new Date(selectedProduct.createdAt), "yyyy-MM-dd")
+          : "";
         setProductCreatedAt(productDate || "");
-        form.setValue("categoryId", selectedProduct ? selectedProduct.categoryId : "", { shouldValidate: true });
-        form.setValue("createdAt", productDate || todayDate, { shouldValidate: true });
+        form.setValue(
+          "categoryId",
+          selectedProduct ? selectedProduct.categoryId : "",
+          { shouldValidate: true }
+        );
+        form.setValue("createdAt", productDate || todayDate, {
+          shouldValidate: true,
+        });
       }
     });
     return () => subscription.unsubscribe();
@@ -132,13 +142,37 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products, categories }
       const selectedDate = new Date(data.createdAt!);
       const productDate = new Date(selectedProduct.createdAt);
       if (selectedDate < productDate) {
-        toast.error(`The selected date cannot be before the product creation date (${productDate.toISOString().split('T')[0]})`);
+        toast.error(
+          `The selected date cannot be before the product creation date (${
+            productDate.toISOString().split("T")[0]
+          })`
+        );
         return;
       }
     }
 
     try {
       setLoading(true);
+
+      // Check for duplicate entry
+      const duplicateCheckResponse = await axios.get(
+        `/api/${params.storeId}/solds`,
+        {
+          params: {
+            productId: data.productId,
+            categoryId: data.categoryId,
+            createdAt: data.createdAt,
+          },
+        }
+      );
+
+      if (duplicateCheckResponse.data.length > 0) {
+        toast.error(
+          "A record already exists for the selected product and date."
+        );
+        setLoading(false);
+        return;
+      }
 
       if (initialData) {
         await axios.patch(
@@ -153,7 +187,7 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products, categories }
       router.refresh();
       toast.success(toastMessage);
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error("Something went wrong. Make sure the date is still available");
     } finally {
       setLoading(false);
     }
@@ -223,10 +257,21 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products, categories }
                       setSelectedCategory(
                         selectedProduct ? selectedProduct.categoryId : ""
                       );
-                      const productDate = selectedProduct ? format(new Date(selectedProduct.createdAt), "yyyy-MM-dd") : "";
+                      const productDate = selectedProduct
+                        ? format(
+                            new Date(selectedProduct.createdAt),
+                            "yyyy-MM-dd"
+                          )
+                        : "";
                       setProductCreatedAt(productDate || "");
-                      form.setValue("categoryId", selectedProduct ? selectedProduct.categoryId : "", { shouldValidate: true });
-                      form.setValue("createdAt", productDate || todayDate, { shouldValidate: true });
+                      form.setValue(
+                        "categoryId",
+                        selectedProduct ? selectedProduct.categoryId : "",
+                        { shouldValidate: true }
+                      );
+                      form.setValue("createdAt", productDate || todayDate, {
+                        shouldValidate: true,
+                      });
                     }}
                     value={field.value}
                     defaultValue={field.value}
@@ -318,11 +363,11 @@ const SoldForm: React.FC<SoldFormProps> = ({ initialData, products, categories }
                 <FormItem>
                   <FormLabel>Date</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="date" 
-                      disabled={loading} 
-                      {...field} 
-                      min={productCreatedAt} // Ensure the date is not before product creation date
+                    <Input
+                      type="date"
+                      disabled={loading}
+                      {...field}
+                      min={productCreatedAt}
                     />
                   </FormControl>
                   <FormMessage />

@@ -5,16 +5,11 @@ import { CellAction } from "./cell-action"
 
 export type CategoryColumn = {
   id: string
-  storeName: string 
   name: string
   createdAt: string
 }
 
 export const columns: ColumnDef<CategoryColumn>[] = [
-  {
-    accessorKey: "storeName",
-    header: "Store",
-  },
   {
     accessorKey: "id",
     header: "Category Id",
