@@ -87,6 +87,7 @@ const AdminDashboard = async ({ params }: { params: { storeId: string } }) => {
         formattedProducts={formattedProducts}
         store={store || defaultStore }
       />
+
     </div>
   );
 };

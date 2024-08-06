@@ -46,6 +46,7 @@ interface DataTableProps<TData extends DataItem, TValue> {
   data: TData[];
   searchKey: string;
   dateKey: string;
+  storeKey: string;
 }
 
 export function DataTable<TData extends DataItem, TValue>({
@@ -53,6 +54,7 @@ export function DataTable<TData extends DataItem, TValue>({
   data,
   searchKey,
   dateKey,
+  storeKey
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [dateFilter, setDateFilter] = useState<string | undefined>(
@@ -226,22 +228,34 @@ export function DataTable<TData extends DataItem, TValue>({
 
   return (
     <div>
-      <div className="grid grid-cols-1 w-full md:grid-cols-2 py-4 gap-2">
+      <div className="grid grid-cols-1 w-full md:grid-cols-3 py-4 gap-2">
         <Input
           placeholder="Search by name"
           value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn(searchKey)?.setFilterValue(event.target.value)
           }
-          className="hidden md:flex md:w-[350px]"
+          className="hidden md:flex md:w-full"
         />
-        <div className="flex gap-2 justify-between">
+        {isAdmin && (
+            <Input
+              placeholder="Search by store"
+              value={
+                (table.getColumn(storeKey)?.getFilterValue() as string) ?? ""
+              }
+              onChange={(event) =>
+                table.getColumn(storeKey)?.setFilterValue(event.target.value)
+              }
+              className="hidden md:flex md:w-full"
+            />
+          )}
           <Input
             type="date"
             value={dateFilter ?? ""}
             onChange={handleDateChange}
-            className="w-[144px]"
+            className="w-full"
           />
+        <div className="flex gap-2 justify-between">
           {currentPath === productsPath ? (
             <Dialog>
               <DialogTrigger>
@@ -331,6 +345,18 @@ export function DataTable<TData extends DataItem, TValue>({
           }
           className="flex w-full md:hidden"
         />
+        {isAdmin && (
+            <Input
+              placeholder="Search by store"
+              value={
+                (table.getColumn(storeKey)?.getFilterValue() as string) ?? ""
+              }
+              onChange={(event) =>
+                table.getColumn(storeKey)?.setFilterValue(event.target.value)
+              }
+              className="flex w-full md:hidden"
+            />
+          )}
       </div>
       <div className="rounded-md border w-full">
         <Table className="whitespace-nowrap">

@@ -8,14 +8,19 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  name          String   @unique
-  email         String?  @unique
-  address       String
-  phone         Int
-  contactPerson String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id            String    @id @default(uuid())
+  name          String    @unique
+  image         String?
+  email         String?   @unique
+  store         String    @unique
+  owner         String
+  address       String    @unique
+  phoneNumber   String    
+  lastActive    DateTime
+  lastSignIn    DateTime
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Store {

@@ -7,13 +7,15 @@ import { cn } from "@/lib/utils";
 import {
   FileInput,
   FileType,
-  LayoutDashboard,
+  LayoutDashboardIcon,
   Notebook,
   Settings,
+  User,
 } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 import { Separator } from "./ui/separator";
 import StoreName from "./store-name";
+import { useUser } from "@clerk/nextjs";
 
 const montserrat = Montserrat({
   weight: "600",
@@ -24,37 +26,78 @@ const SideBar = () => {
   const pathname = usePathname();
   const params = useParams();
 
-  const routes = [
-    {
-      label: "Categories",
-      icon: FileType,
-      color: " text-black",
-      href: `/${params.storeId}/categories`,
-    },
-    {
-      label: "Products",
-      icon: Notebook,
-      color: " text-black",
-      href: `/${params.storeId}/products`,
-    },
-    {
-      label: "Solds",
-      icon: FileInput,
-      color: " text-black",
-      href: `/${params.storeId}/solds`,
-    },
-    {
-      href: `/${params.storeId}/settings`,
-      label: "Settings",
-      icon: Settings,
-      color: " text-black",
-    },
-  ];
+  const { user } = useUser();
+  const userId = user?.id;
+
+  const listAdminId = [{ adminId1: "user_2jycpXmZTQ0FxmZiV0uFBjzXRFn" }];
+
+  if (!userId) {
+    return null;
+  }
+
+  const isAdmin = listAdminId.some((admin) =>
+    Object.values(admin).includes(userId)
+  );
+
+  const routes = [];
+
+  if (userId && !isAdmin) {
+    routes.push(
+      {
+        label: "Categories",
+        icon: FileType,
+        color: " text-black",
+        href: `/${params.storeId}/categories`,
+      },
+      {
+        label: "Products",
+        icon: Notebook,
+        color: " text-black",
+        href: `/${params.storeId}/products`,
+      },
+      {
+        label: "Solds",
+        icon: FileInput,
+        color: " text-black",
+        href: `/${params.storeId}/solds`,
+      },
+      {
+        href: `/${params.storeId}/settings`,
+        label: "Settings",
+        icon: Settings,
+        color: " text-black",
+      }
+    );
+  }
+
+  if (userId && isAdmin) {
+    routes.push(
+      {
+        label: "Admin",
+        icon: LayoutDashboardIcon,
+        color: " text-black",
+        href: `/admin`,
+      },
+      {
+        label: "Users",
+        icon: User,
+        color: " text-black",
+        href: `/admin/users`,
+      }
+    );
+  }
+
+  const cDr = (
+    <p className="text-xl font-bold text-black dark:text-white cursor-pointer">
+      Cloud Data Report
+    </p>
+  );
+
   return (
     <div className="space-y-4 py-4 flex flex-col h-full from-purple-50 to-white bg-slate-50 border shadow-lg text-black overflow-y-auto">
       <div className=" py-2 flex-1">
         <div className="pl-3 mb-4">
-          <StoreName storeId={`${params.storeId}`} />
+          {isAdmin ? cDr : <StoreName storeId={`${params.storeId}`} />}
         </div>
         <Separator />
         <div className="space-y-1 p-5">

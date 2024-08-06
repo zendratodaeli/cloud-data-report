@@ -1,4 +1,4 @@
-import NavbarAdmin from "@/components/navbar-admin";
+import NavBar from "@/components/navbar";
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation";
 
@@ -20,7 +20,7 @@ const SetupLayout = async ({
 
   return (
     <>
-      <NavbarAdmin/>
+      <NavBar storeId={""}/>
       {children}
     </>
   )
