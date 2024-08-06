@@ -2,6 +2,8 @@ import * as React from "react";
 import {
   Area,
   AreaChart,
+  Line,
+  LineChart,
   CartesianGrid,
   XAxis,
   YAxis,
@@ -57,6 +59,13 @@ const chartConfig = {
     color: "#008000",
   },
 } satisfies ChartConfig;
+
+const totalProductsChartConfig = {
+  totalProductsCreated: {
+    label: "Total Products Created",
+    color: "#FFA500",
+  },
+};
 
 const StorePerformance: React.FC<StorePerformanceProps> = ({
   products,
@@ -160,7 +169,45 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
     return map;
   };
 
+  const createTotalProductsDateMap = (
+    products: Product[],
+    interval: string
+  ) => {
+    const map = new Map<string, number>();
+
+    products.forEach((product) => {
+      const createdAt = new Date(product.createdAt);
+      let date: string;
+
+      if (interval === "7d" || interval === "30d") {
+        date = format(createdAt, "yyyy-MM-dd");
+      } else if (interval === "6m") {
+        date = format(
+          startOfWeek(createdAt, { weekStartsOn: 1 }),
+          "yyyy-MM-dd"
+        );
+      } else if (interval === "1y" || interval === "all") {
+        date = format(startOfMonth(createdAt), "yyyy-MM");
+      } else {
+        date = format(createdAt, "yyyy-MM-dd");
+      }
+
+      if (!map.has(date)) {
+        map.set(date, 0);
+      }
+      const existing = map.get(date)!;
+
+      map.set(date, existing + 1);
+    });
+
+    return map;
+  };
+
   const dateMap = createDateMap(filteredProducts, timeRange);
+  const totalProductsDateMap = createTotalProductsDateMap(
+    filteredProducts,
+    timeRange
+  );
 
   const mergedData = dateRange.map((date) => {
     const formattedDate =
@@ -180,6 +227,18 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
     };
   });
 
+  const totalProductsData = dateRange.map((date) => {
+    const formattedDate =
+      timeRange === "1y" || timeRange === "all"
+        ? format(date, "yyyy-MM")
+        : format(date, "yyyy-MM-dd");
+    const totalProducts = totalProductsDateMap.get(formattedDate) || 0;
+    return {
+      date: formattedDate,
+      totalProducts,
+    };
+  });
+
   const months = Array.from(
     new Set(
       products.flatMap((product) =>
@@ -194,6 +253,11 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
     selectedMonth === "all"
       ? mergedData
       : mergedData.filter((data) => data.date.startsWith(selectedMonth));
+
+  const filteredTotalProductsData =
+    selectedMonth === "all"
+      ? totalProductsData
+      : totalProductsData.filter((data) => data.date.startsWith(selectedMonth));
 
   const mostRecentNonZeroProfit = filteredMergedData
     .slice()
@@ -225,6 +289,13 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
             <div className="text-large font-semibold">
               Total Quantity Sold:{" "}
               {filteredMergedData.reduce((acc, item) => acc + item.quantity, 0)}
+            </div>
+            <div className="text-large font-semibold">
+              Total Products Created:{" "}
+              {filteredTotalProductsData.reduce(
+                (acc, item) => acc + item.totalProducts,
+                0
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -515,6 +586,66 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                 }
               />
             </AreaChart>
+          </ChartContainer>
+          <ChartContainer
+            config={totalProductsChartConfig}
+            className="aspect-auto h-[250px] w-full mb-6"
+          >
+            <LineChart data={filteredTotalProductsData}>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tickFormatter={(value: any, index: number) => {
+                  const date = new Date(value);
+                  if (timeRange === "7d" || timeRange === "30d") {
+                    return date.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    });
+                  } else if (timeRange === "6m") {
+                    return date.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    });
+                  } else if (timeRange === "1y" || timeRange === "all") {
+                    return date.toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                    });
+                  }
+                  return ""; // Default return value
+                }}
+              />
+              <YAxis
+                domain={[(dataMin: number) => Math.min(0, dataMin), "dataMax"]}
+              />
+              <Tooltip
+                content={({ payload, label }) => {
+                  if (payload && payload.length) {
+                    return (
+                      <div className="custom-tooltip">
+                        <p className="label">{`${label}`}</p>
+                        <p className="intro">{`Total Products Created: ${
+                          payload[0]?.payload?.totalProducts || 0
+                        }`}</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Line
+                dataKey="totalProducts"
+                type="monotone"
+                stroke="#FFA500"
+                name="Total Products Created"
+              />
+              <Legend />
+            </LineChart>
           </ChartContainer>
         </CardContent>
       </Card>

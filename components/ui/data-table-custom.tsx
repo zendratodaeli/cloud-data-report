@@ -153,7 +153,9 @@ export function DataTableCustom<TData extends DataItem, TValue>({
               capital: item.capital,
               quantity: item.quantity,
               tax: item.tax,
-              createdAt: item.createdAt ? format(new Date(item.createdAt), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+              createdAt: item.createdAt
+                ? format(new Date(item.createdAt), "yyyy-MM-dd")
+                : format(new Date(), "yyyy-MM-dd"),
             };
           });
 
@@ -236,7 +238,7 @@ export function DataTableCustom<TData extends DataItem, TValue>({
     currency: "IDR",
   }).format(totalProfit);
 
-   const currentDate = format(new Date(), "MMMM do, yyyy");
+  const currentDate = format(new Date(), "MMMM do, yyyy");
 
   return (
     <div>
@@ -357,7 +359,8 @@ export function DataTableCustom<TData extends DataItem, TValue>({
       <div className="md:flex py-4">
         <Card>
           <CardContent className="py-3 px-3 font-semibold">
-            <span className="font-semibold pr-4">Today, {currentDate}</span> Total Profit: {formattedTotalProfit}
+            <span className="font-semibold pr-4">Today, {currentDate}</span>{" "}
+            Total Profit: {formattedTotalProfit}
           </CardContent>
         </Card>
       </div>

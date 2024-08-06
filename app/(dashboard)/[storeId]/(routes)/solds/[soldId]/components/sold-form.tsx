@@ -187,7 +187,7 @@ const SoldForm: React.FC<SoldFormProps> = ({
       router.refresh();
       toast.success(toastMessage);
     } catch (error) {
-      toast.error("Something went wrong. Make sure the date is still available");
+      toast.error("Something went wrong. It is forbidden to duplicate the entry date for the same product & category. Choose other dates.");
     } finally {
       setLoading(false);
     }
