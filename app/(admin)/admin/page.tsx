@@ -1,9 +1,11 @@
-import SalesProduct  from '@/components/chart/sales-product'
-import StoresPerformance from '@/components/chart/stores-performance';
-import UnrealizedProduct from '@/components/chart/unrealized-sales-product';
-import UnrealizedStoresPerformance from '@/components/chart/unrealized-stores-performance';
-import prismadb from '@/lib/prismadb'
-import { auth } from '@clerk/nextjs/server'
+import { formatter } from "@/lib/utils";
+import { format } from "date-fns";
+import { auth } from "@clerk/nextjs/server";
+import prismadb from "@/lib/prismadb";
+import React from "react";
+import ProductsClientWrapper from "./components/products-client-wrapper";
+import { Store } from "@/types";
+import { ProductsColumn } from "./components/columns";
 
 const AdminDashboard = async ({ params }: { params: { storeId: string } }) => {
   const { userId } = auth();
@@ -12,59 +14,81 @@ const AdminDashboard = async ({ params }: { params: { storeId: string } }) => {
     return null;
   }
 
-  const stores = await prismadb.store.findMany({
-    include: {
-      products: true
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  })
-
   const products = await prismadb.product.findMany({
     include: {
       category: true,
-      store: true
+      store: true,
+      sold: true
     },
     orderBy: {
       createdAt: "desc",
     },
+  });
+
+  const store = await prismadb.store.findFirst({
+    where: {
+      userId: userId
+    },
   })
 
-  const transformedProducts = products.map(product => ({
+  const formattedProducts: ProductsColumn[] = products.map((item) => ({
+    id: item.id,
+    store: item.store.name,
+    name: item.name,
+    pricePerPiece: formatter.format(item.pricePerPiece),
+    capital: formatter.format(item.capital),
+    quantity: item.quantity,
+    remainQuantity: item.remainQuantity,
+    soldOutQuantity: item.quantity - item.remainQuantity,
+    grossIncome: formatter.format(item.grossIncome),
+    income: formatter.format(item.income),
+    tax: `${item.tax}%`,
+    grossProfit: formatter.format(item.grossProfit),
+    profit: formatter.format(item.profit),
+    category: item.category.name,
+    createdAt: format(item.createdAt, "MMMM do, yyyy"),
+  }));
+
+
+  const transformedProducts = products.map((product) => ({
     ...product,
-    price: Number(product.price),
-    createdAt: product.createdAt.toISOString(),
-    updatedAt: product.updatedAt.toISOString(),
+    pricePerPiece: Number(product.pricePerPiece),
+    createdAt: new Date(product.createdAt),
+    updatedAt: new Date(product.updatedAt),
+    sold: product.sold.map((soldItem) => ({
+      ...soldItem,
+      createdAt: new Date(soldItem.createdAt),
+      updatedAt: new Date(soldItem.updatedAt),
+    })),
     category: {
       ...product.category,
-      createdAt: product.category.createdAt.toISOString(),
-      updatedAt: product.category.updatedAt.toISOString(),
+      createdAt: new Date(product.category.createdAt),
+      updatedAt: new Date(product.category.updatedAt),
     },
     store: {
       ...product.store,
-      createdAt: product.store.createdAt.toISOString(),
-      updatedAt: product.store.updatedAt.toISOString(),
-    }
+      createdAt: new Date(product.store.createdAt),
+      updatedAt: new Date(product.store.updatedAt),
+    },
   }));
 
-  const transformedStores = stores.map(store => ({
-    id: store.id,
-    name: store.name,
-    userId: store.userId
-  }));
+  const defaultStore: Store = {
+    id: "default-id",
+    userId: userId,
+    name: "Default Store",
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
 
   return (
-    <div className='pt-16 space-y-10'>
-      <div className="w-full flex justify-center pt-10">
-        <h1 className="text-2xl font-bold underline">Admin Dashboard</h1>
-      </div>
-      <div>
-        <StoresPerformance products={transformedProducts} stores={transformedStores} />
-      </div>
-      <UnrealizedStoresPerformance products={transformedProducts} stores={transformedStores}/>
+    <div className="flex-col pt-16">
+      <ProductsClientWrapper
+        products={transformedProducts}
+        formattedProducts={formattedProducts}
+        store={store || defaultStore }
+      />
     </div>
-  )
-}
+  );
+};
 
 export default AdminDashboard;

@@ -19,6 +19,7 @@ import {
   eachDayOfInterval,
   eachWeekOfInterval,
   eachMonthOfInterval,
+  eachYearOfInterval,
 } from "date-fns";
 import {
   Card,
@@ -72,13 +73,12 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
   chartRef,
 }) => {
   const [timeRange, setTimeRange] = React.useState("7d");
+  const [allTimeInterval, setAllTimeInterval] = React.useState("day");
   const [selectedProduct, setSelectedProduct] = React.useState<string>("all");
   const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
   const [selectedMonth, setSelectedMonth] = React.useState<string>("all");
   const { user } = useUser();
   const userId = user?.id;
-
-  console.log(products, "products");
 
   const storeName = products.map((s) => s.store.name);
   const firstStoreName = storeName[0];
@@ -120,8 +120,17 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
       { start: pastDate, end: now },
       { weekStartsOn: 1 }
     );
-  } else if (timeRange === "1y" || timeRange === "all") {
+  } else if (timeRange === "1y" || (timeRange === "all" && allTimeInterval === "month")) {
     dateRange = eachMonthOfInterval({ start: pastDate, end: now });
+  } else if (timeRange === "all" && allTimeInterval === "week") {
+    dateRange = eachWeekOfInterval(
+      { start: pastDate, end: now },
+      { weekStartsOn: 1 }
+    );
+  } else if (timeRange === "all" && allTimeInterval === "day") {
+    dateRange = eachDayOfInterval({ start: pastDate, end: now });
+  } else if (timeRange === "all" && allTimeInterval === "year") {
+    dateRange = eachYearOfInterval({ start: pastDate, end: now });
   } else {
     dateRange = eachDayOfInterval({ start: pastDate, end: now });
   }
@@ -137,15 +146,17 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
         const soldDate = new Date(soldRecord.createdAt);
         let date: string;
 
-        if (interval === "7d" || interval === "30d") {
+        if (interval === "7d" || interval === "30d" || (interval === "all" && allTimeInterval === "day")) {
           date = format(soldDate, "yyyy-MM-dd");
-        } else if (interval === "6m") {
+        } else if (interval === "6m" || (interval === "all" && allTimeInterval === "week")) {
           date = format(
             startOfWeek(soldDate, { weekStartsOn: 1 }),
             "yyyy-MM-dd"
           );
-        } else if (interval === "1y" || interval === "all") {
+        } else if (interval === "1y" || (interval === "all" && allTimeInterval === "month")) {
           date = format(startOfMonth(soldDate), "yyyy-MM");
+        } else if (interval === "all" && allTimeInterval === "year") {
+          date = format(soldDate, "yyyy");
         } else {
           date = format(soldDate, "yyyy-MM-dd");
         }
@@ -179,15 +190,17 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
       const createdAt = new Date(product.createdAt);
       let date: string;
 
-      if (interval === "7d" || interval === "30d") {
+      if (interval === "7d" || interval === "30d" || (interval === "all" && allTimeInterval === "day")) {
         date = format(createdAt, "yyyy-MM-dd");
-      } else if (interval === "6m") {
+      } else if (interval === "6m" || (interval === "all" && allTimeInterval === "week")) {
         date = format(
           startOfWeek(createdAt, { weekStartsOn: 1 }),
           "yyyy-MM-dd"
         );
-      } else if (interval === "1y" || interval === "all") {
+      } else if (interval === "1y" || (interval === "all" && allTimeInterval === "month")) {
         date = format(startOfMonth(createdAt), "yyyy-MM");
+      } else if (interval === "all" && allTimeInterval === "year") {
+        date = format(createdAt, "yyyy");
       } else {
         date = format(createdAt, "yyyy-MM-dd");
       }
@@ -211,8 +224,10 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
 
   const mergedData = dateRange.map((date) => {
     const formattedDate =
-      timeRange === "1y" || timeRange === "all"
+      timeRange === "1y" || (timeRange === "all" && allTimeInterval === "month")
         ? format(date, "yyyy-MM")
+        : (timeRange === "all" && allTimeInterval === "year")
+        ? format(date, "yyyy")
         : format(date, "yyyy-MM-dd");
     const data = dateMap.get(formattedDate) || {
       quantity: 0,
@@ -229,8 +244,10 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
 
   const totalProductsData = dateRange.map((date) => {
     const formattedDate =
-      timeRange === "1y" || timeRange === "all"
+      timeRange === "1y" || (timeRange === "all" && allTimeInterval === "month")
         ? format(date, "yyyy-MM")
+        : (timeRange === "all" && allTimeInterval === "year")
+        ? format(date, "yyyy")
         : format(date, "yyyy-MM-dd");
     const totalProducts = totalProductsDateMap.get(formattedDate) || 0;
     return {
@@ -300,7 +317,12 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Select value={timeRange} onValueChange={setTimeRange}>
+              <Select value={timeRange} onValueChange={(value) => {
+                setTimeRange(value);
+                if (value !== "all") {
+                  setAllTimeInterval("day");
+                }
+              }}>
                 <SelectTrigger
                   className="w-[160px] rounded-lg "
                   aria-label="Select a value"
@@ -325,6 +347,30 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                   </SelectItem>
                 </SelectContent>
               </Select>
+              {timeRange === "all" && (
+                <Select value={allTimeInterval} onValueChange={setAllTimeInterval}>
+                  <SelectTrigger
+                    className="w-[160px] rounded-lg mt-2"
+                    aria-label="Select interval for all time"
+                  >
+                    <SelectValue placeholder="Select interval" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="day" className="rounded-lg">
+                      <Button variant="link">By Day</Button>
+                    </SelectItem>
+                    <SelectItem value="week" className="rounded-lg">
+                      <Button variant="link">By Week</Button>
+                    </SelectItem>
+                    <SelectItem value="month" className="rounded-lg">
+                      <Button variant="link">By Month</Button>
+                    </SelectItem>
+                    <SelectItem value="year" className="rounded-lg">
+                      <Button variant="link">By Year</Button>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div>
               <Select
@@ -457,11 +503,13 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                       month: "short",
                       day: "numeric",
                     });
-                  } else if (timeRange === "1y" || timeRange === "all") {
+                  } else if (timeRange === "1y" || (timeRange === "all" && allTimeInterval === "month")) {
                     return date.toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "short",
                     });
+                  } else if (timeRange === "all" && allTimeInterval === "year") {
+                    return date.getFullYear().toString();
                   }
                   return ""; // Default return value
                 }}
@@ -543,11 +591,13 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                       month: "short",
                       day: "numeric",
                     });
-                  } else if (timeRange === "1y" || timeRange === "all") {
+                  } else if (timeRange === "1y" || (timeRange === "all" && allTimeInterval === "month")) {
                     return date.toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "short",
                     });
+                  } else if (timeRange === "all" && allTimeInterval === "year") {
+                    return date.getFullYear().toString();
                   }
                   return ""; // Default return value
                 }}
@@ -611,11 +661,13 @@ const StorePerformance: React.FC<StorePerformanceProps> = ({
                       month: "short",
                       day: "numeric",
                     });
-                  } else if (timeRange === "1y" || timeRange === "all") {
+                  } else if (timeRange === "1y" || (timeRange === "all" && allTimeInterval === "month")) {
                     return date.toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "short",
                     });
+                  } else if (timeRange === "all" && allTimeInterval === "year") {
+                    return date.getFullYear().toString();
                   }
                   return ""; // Default return value
                 }}

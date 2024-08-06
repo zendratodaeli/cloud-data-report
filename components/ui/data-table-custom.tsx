@@ -47,6 +47,7 @@ interface DataTableCustomProps<TData extends DataItem, TValue> {
   data: TData[];
   searchKey: string;
   dateKey: string;
+  storeKey: string;
 }
 
 export function DataTableCustom<TData extends DataItem, TValue>({
@@ -54,6 +55,7 @@ export function DataTableCustom<TData extends DataItem, TValue>({
   data,
   searchKey,
   dateKey,
+  storeKey,
 }: DataTableCustomProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [dateFilter, setDateFilter] = useState<string | undefined>(undefined);
@@ -167,7 +169,9 @@ export function DataTableCustom<TData extends DataItem, TValue>({
             router.refresh();
           } catch (error) {
             console.error("Error uploading data:", error);
-            toast.error("Something went wrong. It is forbidden to duplicate the entry date for the same product & category. Choose other dates.");
+            toast.error(
+              "Something went wrong. It is forbidden to duplicate the entry date for the same product & category. Choose other dates."
+            );
           } finally {
             setLoading(false);
           }
@@ -198,10 +202,6 @@ export function DataTableCustom<TData extends DataItem, TValue>({
   }
 
   const isAdmin = listAdminId.includes(userId);
-
-  if (!isMounted) {
-    return null;
-  }
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -240,10 +240,14 @@ export function DataTableCustom<TData extends DataItem, TValue>({
 
   const currentDate = format(new Date(), "MMMM do, yyyy");
 
+  if (!isMounted) {
+    return null;
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center py-4">
-        <div className="grid grid-cols-1 w-full md:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 w-full md:grid-cols-3 gap-2">
           <Input
             placeholder="Search by name"
             value={
@@ -252,98 +256,105 @@ export function DataTableCustom<TData extends DataItem, TValue>({
             onChange={(event) =>
               table.getColumn(searchKey)?.setFilterValue(event.target.value)
             }
-            className="hidden md:flex md:w-[350px]"
+            className="hidden md:flex md:w-full"
           />
-          <div className="flex gap-2 justify-between">
+          {isAdmin && (
+            <Input
+              placeholder="Search by store"
+              value={
+                (table.getColumn(storeKey)?.getFilterValue() as string) ?? ""
+              }
+              onChange={(event) =>
+                table.getColumn(storeKey)?.setFilterValue(event.target.value)
+              }
+              className="hidden md:flex md:w-full"
+            />
+          )}
+          <div className="flex gap-2 justify-end">
             <Input
               type="date"
               value={dateFilter ?? ""}
               onChange={handleDateChange}
-              className="w-[144px]"
+              className="w-full"
             />
-            {currentPath === productsPath ? (
-              <Dialog>
-                <DialogTrigger>
-                  <Button
-                    className="w-[115.84px] md:w-[150px]"
-                    variant={"outline"}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Import
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle className="text-center mb-2">
-                      Upload File
-                    </DialogTitle>
-                    <DialogDescription>
-                      <div
-                        className={`border-2 border-dashed rounded-lg p-6 cursor-pointer ${
-                          isDragOver
-                            ? "bg-gray-200 dark:bg-gray-600 border-gray-400 dark:border-gray-500"
-                            : "bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500"
-                        }`}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
-                        onClick={() =>
-                          document.getElementById("dropzone-file")?.click()
-                        }
-                      >
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <svg
-                            className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M7 16V12m0 0V8m0 4h4m4 0h.01M20 12h.01M4 12h.01M12 20l4-4m-8 4l4-4"
-                            ></path>
-                          </svg>
-                          <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                            <span className="font-semibold">
-                              Click to upload
-                            </span>{" "}
-                            or drag and drop
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            XLS or XLSX files only
-                          </p>
-                        </div>
-                        <Input
-                          id="dropzone-file"
-                          type="file"
-                          accept=".xls,.xlsx"
-                          className="hidden"
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                      {file && (
-                        <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-                          Selected file: {file.name}
-                        </p>
-                      )}
-                      <Button
-                        onClick={() => handleFileUpload(file)}
-                        disabled={loading}
-                        className="w-full mt-4"
-                      >
-                        {loading ? "Uploading in progress..." : "Upload"}
-                      </Button>
-                    </DialogDescription>
-                  </DialogHeader>
-                </DialogContent>
-              </Dialog>
-            ) : (
-              <></>
-            )}
           </div>
+          {currentPath === productsPath ? (
+            <Dialog>
+              <DialogTrigger>
+                <Button className="w-full" variant={"outline"}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Import
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="text-center mb-2">
+                    Upload File
+                  </DialogTitle>
+                  <DialogDescription>
+                    <div
+                      className={`border-2 border-dashed rounded-lg p-6 cursor-pointer ${
+                        isDragOver
+                          ? "bg-gray-200 dark:bg-gray-600 border-gray-400 dark:border-gray-500"
+                          : "bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500"
+                      }`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() =>
+                        document.getElementById("dropzone-file")?.click()
+                      }
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg
+                          className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M7 16V12m0 0V8m0 4h4m4 0h.01M20 12h.01M4 12h.01M12 20l4-4m-8 4l4-4"
+                          ></path>
+                        </svg>
+                        <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                          <span className="font-semibold">Click to upload</span>{" "}
+                          or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          XLS or XLSX files only
+                        </p>
+                      </div>
+                      <Input
+                        id="dropzone-file"
+                        type="file"
+                        accept=".xls,.xlsx"
+                        className="hidden"
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    {file && (
+                      <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+                        Selected file: {file.name}
+                      </p>
+                    )}
+                    <Button
+                      onClick={() => handleFileUpload(file)}
+                      disabled={loading}
+                      className="w-full mt-4"
+                    >
+                      {loading ? "Uploading in progress..." : "Upload"}
+                    </Button>
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <></>
+          )}
           <Input
             placeholder="Search by name"
             value={
@@ -354,13 +365,25 @@ export function DataTableCustom<TData extends DataItem, TValue>({
             }
             className="flex w-full md:hidden"
           />
+          {isAdmin && (
+            <Input
+              placeholder="Search by store"
+              value={
+                (table.getColumn(storeKey)?.getFilterValue() as string) ?? ""
+              }
+              onChange={(event) =>
+                table.getColumn(storeKey)?.setFilterValue(event.target.value)
+              }
+              className="flex w-full md:hidden"
+            />
+          )}
         </div>
       </div>
       <div className="md:flex py-4">
         <Card>
           <CardContent className="py-3 px-3 font-semibold">
             <span className="font-semibold pr-4">Today, {currentDate}</span>{" "}
-            Total Profit: {formattedTotalProfit}
+            Total Profit {isAdmin && "All Stores"}: {formattedTotalProfit}
           </CardContent>
         </Card>
       </div>

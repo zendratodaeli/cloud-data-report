@@ -27,7 +27,7 @@ const SetupLayout = async ({
   });
 
   if(store) {
-    redirect(`/${store.id}`);
+    redirect(`/${store.id}/products`);
   }
 
   return (

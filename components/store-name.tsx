@@ -38,7 +38,7 @@ const StoreName = ({ storeId }: StoreNameProps) => {
   return (
     <div>
       <h1 className='text-xl font-bold text-black dark:text-white cursor-pointer'>
-        <Link href={`/${storeId}`}>
+        <Link href={`/${storeId}/products`}>
           {store.name}
         </Link>
       </h1>
