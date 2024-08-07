@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, Option, Printer } from "lucide-react";
+import { Download, File, Option, Printer } from "lucide-react";
 import { ProductColumn } from "@/types";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -12,19 +12,22 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Product, Store } from "@prisma/client";
+import { Store } from "@prisma/client";
 
 interface DownloadButtonProps {
   data: ProductColumn[];
   chartRef: React.RefObject<HTMLDivElement>;
-  store: Store
+  store: Store;
 }
 
-const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef, store }) => {
+const DownloadButton: React.FC<DownloadButtonProps> = ({
+  data,
+  chartRef,
+  store,
+}) => {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -95,7 +98,6 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef, store }
     const blob = new Blob([buffer], { type: "application/octet-stream" });
     saveAs(blob, `${store.name}.xlsx`);
   };
-
 
   const onPrint = async () => {
     const chartImage = await captureChart();
@@ -198,6 +200,15 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef, store }
     return null;
   }
 
+  const handleDownload = () => {
+    const link = document.createElement("a");
+    link.href = "/cloud-data-report-product-template.xlsx"; // Path relative to the public folder
+    link.download = "cloud-data-report-product-template.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
@@ -210,12 +221,22 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ data, chartRef, store }
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <Button
+            className="w-full"
+            onClick={handleDownload}
+            variant={"outline"}
+          >
+            <File className="mr-2 h-4 w-4" />
+            Download Template
+          </Button>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Button
             onClick={onExportLocal}
             variant={"outline"}
             className="w-full"
           >
             <Download className="mr-2 h-4 w-4" />
-            Download as Excel
+            Download Table
           </Button>
         </DropdownMenuItem>
         <DropdownMenuItem>

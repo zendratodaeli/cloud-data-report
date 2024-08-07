@@ -26,7 +26,8 @@ import DOMPurify from "dompurify";
 import { format, parse } from "date-fns";
 import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Download, DownloadCloud, Plus } from "lucide-react";
+
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { useUser } from "@clerk/nextjs";
 import { Card, CardContent } from "./card";
+import Link from "next/link";
 
 interface DataItem {
   [key: string]: any;
@@ -162,7 +164,10 @@ export function DataTableCustom<TData extends DataItem, TValue>({
           });
 
           try {
-            await axios.post(`/api/${params.storeId}/data-upload`, parsedJson);
+            await axios.post(
+              `/api/${params.storeId}/product-upload`,
+              parsedJson
+            );
             toast.success("Product has been uploaded successfully");
 
             router.push(`/${params.storeId}/products`);
@@ -283,7 +288,7 @@ export function DataTableCustom<TData extends DataItem, TValue>({
               <DialogTrigger>
                 <Button className="w-full" variant={"outline"}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Import
+                  Import Product
                 </Button>
               </DialogTrigger>
               <DialogContent>
