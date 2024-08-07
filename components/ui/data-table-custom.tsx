@@ -275,14 +275,7 @@ export function DataTableCustom<TData extends DataItem, TValue>({
               className="hidden md:flex md:w-full"
             />
           )}
-          <div className="flex gap-2 justify-end">
-            <Input
-              type="date"
-              value={dateFilter ?? ""}
-              onChange={handleDateChange}
-              className="w-full"
-            />
-          </div>
+          
           {currentPath === productsPath ? (
             <Dialog>
               <DialogTrigger>
@@ -360,6 +353,14 @@ export function DataTableCustom<TData extends DataItem, TValue>({
           ) : (
             <></>
           )}
+          <div className="flex gap-2 justify-end">
+            <Input
+              type="date"
+              value={dateFilter ?? ""}
+              onChange={handleDateChange}
+              className="w-full"
+            />
+          </div>
           <Input
             placeholder="Search by name"
             value={
@@ -386,9 +387,11 @@ export function DataTableCustom<TData extends DataItem, TValue>({
       </div>
       <div className="md:flex py-4">
         <Card>
-          <CardContent className="py-3 px-3 font-semibold">
+          <CardContent className="py-3 px-3 font-semibold flex flex-col md:flex-row">
             <span className="font-semibold pr-4">Today, {currentDate}</span>{" "}
-            Total Profit {isAdmin && "All Stores"}: {formattedTotalProfit}
+              <p>
+                Profit {isAdmin && "All Stores"}: {formattedTotalProfit}
+              </p>
           </CardContent>
         </Card>
       </div>

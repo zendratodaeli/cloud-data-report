@@ -46,7 +46,6 @@ interface DataTableProps<TData extends DataItem, TValue> {
   data: TData[];
   searchKey: string;
   dateKey: string;
-  storeKey: string;
 }
 
 export function DataTable<TData extends DataItem, TValue>({
@@ -54,7 +53,6 @@ export function DataTable<TData extends DataItem, TValue>({
   data,
   searchKey,
   dateKey,
-  storeKey,
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [dateFilter, setDateFilter] = useState<string | undefined>(

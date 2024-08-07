@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { Download, File, Option, Printer } from "lucide-react";
 import { ProductColumn } from "@/types";
@@ -15,7 +17,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import { Store } from "@prisma/client";
+import { useParams } from "next/navigation";
 
 interface DownloadButtonProps {
   data: ProductColumn[];
@@ -29,6 +33,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({
   store,
 }) => {
   const [isMounted, setIsMounted] = useState(false);
+  const params = useParams();
 
   useEffect(() => {
     setIsMounted(true);
@@ -200,7 +205,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({
     return null;
   }
 
-  const handleDownload = () => {
+  const handleFileProductDownload = () => {
     const link = document.createElement("a");
     link.href = "/cloud-data-report-product-template.xlsx"; // Path relative to the public folder
     link.download = "cloud-data-report-product-template.xlsx";
@@ -208,6 +213,9 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({
     link.click();
     document.body.removeChild(link);
   };
+
+  const currentPath = window.location.pathname;
+  const productsPath = `/${params.storeId}/products`;
 
   return (
     <DropdownMenu>
@@ -217,35 +225,37 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({
           <Button variant={"outline"}>Download Options</Button>
         </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <Button
-            className="w-full"
-            onClick={handleDownload}
-            variant={"outline"}
-          >
-            <File className="mr-2 h-4 w-4" />
-            Download Template
-          </Button>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Button
-            onClick={onExportLocal}
-            variant={"outline"}
-            className="w-full"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Download Table
-          </Button>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Button onClick={onPrint} variant={"outline"} className="w-full">
-            <Printer className="mr-2 h-4 w-4" />
-            Print
-          </Button>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
+      {currentPath === productsPath && (
+        <DropdownMenuContent>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>
+            <Button
+              className="w-full"
+              onClick={handleFileProductDownload}
+              variant={"outline"}
+            >
+              <File className="mr-2 h-4 w-4" />
+              Download Template
+            </Button>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <Button
+              onClick={onExportLocal}
+              variant={"outline"}
+              className="w-full"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download Table
+            </Button>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <Button onClick={onPrint} variant={"outline"} className="w-full">
+              <Printer className="mr-2 h-4 w-4" />
+              Print
+            </Button>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      )}
     </DropdownMenu>
   );
 };

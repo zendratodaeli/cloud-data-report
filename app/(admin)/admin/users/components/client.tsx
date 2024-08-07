@@ -15,7 +15,7 @@ const DataClient: React.FC<DataClientProps> = ({ data }) => {
   return (
     <>
       <div className="flex items-center justify-between">
-        <Heading title={`User List (${data.length})`} description="Manage your customer users"/>
+        <Heading title={`Users List (${data.length})`} description="Manage your customer users"/>
       </div>
       <Separator />
       <DataTable

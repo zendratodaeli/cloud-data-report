@@ -325,7 +325,7 @@ const StoresPerformance: React.FC<StoresPerformanceProps> = ({
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div>
               <Select value={timeRange} onValueChange={(value) => {
                 setTimeRange(value);
@@ -545,7 +545,7 @@ const StoresPerformance: React.FC<StoresPerformanceProps> = ({
                   } else if (timeRange === "all" && allTimeInterval === "year") {
                     return date.getFullYear().toString();
                   }
-                  return ""; // Default return value
+                  return "";
                 }}
               />
               <YAxis
@@ -633,7 +633,7 @@ const StoresPerformance: React.FC<StoresPerformanceProps> = ({
                   } else if (timeRange === "all" && allTimeInterval === "year") {
                     return date.getFullYear().toString();
                   }
-                  return ""; // Default return value
+                  return "";
                 }}
               />
               <YAxis
@@ -703,7 +703,7 @@ const StoresPerformance: React.FC<StoresPerformanceProps> = ({
                   } else if (timeRange === "all" && allTimeInterval === "year") {
                     return date.getFullYear().toString();
                   }
-                  return ""; // Default return value
+                  return "";
                 }}
               />
               <YAxis

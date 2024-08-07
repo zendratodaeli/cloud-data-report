@@ -4,6 +4,8 @@ import { format } from 'date-fns';
 import { auth } from '@clerk/nextjs/server';
 import { formatter } from '@/lib/utils';
 import SoldClient from './components/client';
+import DownloadButton from '@/components/download-button';
+import DownloadButtonCustom from '@/components/download-button-custom';
 
 const SoldPage = async ({ params }: { params: { storeId: string } }) => {
   const { userId } = auth();
@@ -44,6 +46,7 @@ const SoldPage = async ({ params }: { params: { storeId: string } }) => {
     <div className="flex-col pt-16">
       <div className="flex-1 space-y-4 p-8 pt-6">
         <SoldClient data={formattedSoldRecords} />
+        <DownloadButtonCustom/>
       </div>
     </div>
   );

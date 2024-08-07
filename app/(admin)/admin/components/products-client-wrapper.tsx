@@ -20,7 +20,6 @@ const ProductsClientWrapper: React.FC<ProductsClientWrapperProps> = ({ products,
     <div className="flex-1 space-y-4 p-8 pt-6">
       <StoresPerformance products={products} chartRef={chartRef} />
       <ProductsClient data={formattedProducts} />
-      <DownloadButton data={formattedProducts} chartRef={chartRef} store={store} />
     </div>
   );
 };

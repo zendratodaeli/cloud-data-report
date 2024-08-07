@@ -3,6 +3,7 @@ import { CategoryColumn } from './components/columns'
 import { format } from 'date-fns'
 import CategoryClient from './components/client'
 import { auth } from '@clerk/nextjs/server'
+import DownloadButtonCustom from '@/components/download-button-custom'
 
 const CategoriesPage = async ({
   params
@@ -37,6 +38,7 @@ const CategoriesPage = async ({
     <div className='flex-col pt-16'>
       <div className='flex-1 space-y-4 p-8 pt-6'>
         <CategoryClient data={formattedCategories}/>
+        <DownloadButtonCustom/>
       </div>
     </div>
   )
